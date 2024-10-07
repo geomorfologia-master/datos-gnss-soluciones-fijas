@@ -10,7 +10,7 @@ Versión HTML (quizá más legible),
 
 # Fecha/hora de entrega
 
-**7 de octubre de 2024, 7:59 pm.**
+**14 de octubre de 2024, 7:59 pm.**
 
 # Objetivos
 
