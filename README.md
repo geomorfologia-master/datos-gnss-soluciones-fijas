@@ -64,8 +64,12 @@ partir de las observaciones brutas realizadas en el terreno.
 
 - [RTKLib Demo5](https://github.com/rtklibexplorer/RTKLIB/releases)
 
-  - [Versión b34i (de mayo de
-    2024)](https://github.com/rtklibexplorer/RTKLIB/releases/download/b34i/demo5_b34i.zip)
+  - Descarga la versión más reciente “RTKLib Demo5”. A la fecha de
+    elaborar esta práctica, la más reciente era “demo5 b34k”. Con
+    independencia de cuál sea la versión, si estás usando como sistema
+    operativo Windows, te convendrá descargar el binario compildo, el
+    cual se encuentra en el archivo de extensión `.zip` (por ejemplo
+    `demo5_b34k.zip`).
 
 # Ejercicio 1. Descarga tus datos, conviértelos, evalúa su calidad, descríbelos
 
