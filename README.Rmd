@@ -73,7 +73,7 @@ Notar que en el vídeo sugerido, se conocen las coordenadas precisas de la base.
   
 -Software:
 
-  - Converter de Unicore. Para convertir archivo Unicore (de la base), usar Converter, que se encuentra [aquí](https://github.com/Stefal/rtkbase/files/14365511/converter3-0-7.zip)
+  - Converter de Unicore. Para convertir archivo Unicore (de la base), usar Converter, que se encuentra [aquí](https://drive.google.com/drive/folders/1uh69yyfTBoJakwA3yxUPJAyA2rRIuzEO?usp=drive_link)
 
   - [RTKLib Demo5](https://github.com/rtklibexplorer/RTKLIB/releases)
     - [Versión b34i (de mayo de 2024)](https://github.com/rtklibexplorer/RTKLIB/releases/download/b34i/demo5_b34i.zip)

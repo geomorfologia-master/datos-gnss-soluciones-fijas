@@ -3,7 +3,7 @@ fijas<small><br>Geomorfología (GEO-114)<br>Universidad Autónoma de Santo
 Domingo (UASD)<br>Semestre 2024-02</small>
 ================
 El Tali
-2024-10-07
+2024-10-11
 
 Versión HTML (quizá más legible),
 [aquí](https://geomorfologia-master.github.io/datos-gnss-soluciones-fijas/README.html)
@@ -60,7 +60,7 @@ partir de las observaciones brutas realizadas en el terreno.
 
 - Converter de Unicore. Para convertir archivo Unicore (de la base),
   usar Converter, que se encuentra
-  [aquí](https://github.com/Stefal/rtkbase/files/14365511/converter3-0-7.zip)
+  [aquí](https://drive.google.com/drive/folders/1uh69yyfTBoJakwA3yxUPJAyA2rRIuzEO?usp=drive_link)
 
 - [RTKLib Demo5](https://github.com/rtklibexplorer/RTKLIB/releases)
 
