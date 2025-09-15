@@ -1,20 +1,20 @@
-Prácticas de aula 6 (PA06). Procesa datos GNSS y obtén soluciones
+Prácticas de aula 3 (PA03). Procesa datos GNSS y obtén soluciones
 fijas<small><br>Geomorfología (GEO-114)<br>Universidad Autónoma de Santo
-Domingo (UASD)<br>Semestre 2024-02</small>
+Domingo (UASD)</small>
 ================
 El Tali
-2024-10-11
+2025-09-15
 
 Versión HTML (quizá más legible),
 [aquí](https://geomorfologia-master.github.io/datos-gnss-soluciones-fijas/README.html)
 
 # Fecha/hora de entrega
 
-**14 de octubre de 2024, 7:59 pm.**
+**Ver portal de la asignatura**
 
 # Objetivos
 
-1.  **Familiarizarse con el procesamiento de datos GNSS**: Los
+1.  **Familiarizarse con el procesamiento de datos GNSS**: Los y las
     estudiantes aprenderán a descargar, convertir y analizar datos GNSS
     recolectados en el campo utilizando diferentes herramientas, con el
     fin de obtener soluciones precisas de posición.
@@ -52,9 +52,12 @@ Versión HTML (quizá más legible),
   - [Vídeo de apoyo para convertir coordenada ITRF a WGS84
     clase](https://drive.google.com/file/d/1j4YXlBTxb_ouYsBzqIQgPyhpCdn09WoN/view?usp=drive_link)
 
-Notar que en el vídeo sugerido, se conocen las coordenadas precisas de
-la base. En este caso, las coordenadas de la base deben generarse a
-partir de las observaciones brutas realizadas en el terreno.
+Las coordenadas precisas de la base serán compartidas también en este
+mismo repo. Sin embargo, sólo las usarás para compararlas con las que
+obtengas por tu cuenta, poruqe también practicarás cómo obtenerlas
+usando las observaciones crudas de la base.
+
+<!-- Notar que en el vídeo sugerido, se conocen las coordenadas precisas de la base. En este caso, las coordenadas de la base deben generarse a partir de las observaciones brutas realizadas en el terreno. -->
 
 -Software:
 
@@ -62,29 +65,41 @@ partir de las observaciones brutas realizadas en el terreno.
   usar Converter, que se encuentra
   [aquí](https://drive.google.com/drive/folders/1uh69yyfTBoJakwA3yxUPJAyA2rRIuzEO?usp=drive_link)
 
-- [RTKLib Demo5](https://github.com/rtklibexplorer/RTKLIB/releases)
+- [RTKLib-EX, antiguamente
+  “Demo5”](https://github.com/rtklibexplorer/RTKLIB/releases)
 
-  - Descarga la versión más reciente “RTKLib Demo5”. A la fecha de
-    elaborar esta práctica, la más reciente era “demo5 b34k”. Con
+  - Descarga la versión más reciente de “RTKLIB-EX”. A la fecha de
+    elaborar esta práctica, la más reciente era “RTKLIB-EX 2.5.0”. Con
     independencia de cuál sea la versión, si estás usando como sistema
-    operativo Windows, te convendrá descargar el binario compildo, el
+    operativo Windows, te convendrá descargar el binario compilado, el
     cual se encuentra en el archivo de extensión `.zip` (por ejemplo
-    `demo5_b34k.zip`).
+    [v2.5.0.zip](https://github.com/rtklibexplorer/RTKLIB/archive/refs/tags/v2.5.0.zip)).
 
 # Ejercicio 1. Descarga tus datos, conviértelos, evalúa su calidad, descríbelos
 
 - Visita [esta carpeta de
-  Drive](https://drive.google.com/drive/folders/1bEyVLVSQo7-bkQr5q4Tt_-ookPERQKBH?usp=drive_link)
-  y descarga tus datos, según el número que te tocó (estudiante-##).
+  Drive](https://drive.google.com/drive/folders/1i5vjg74UvPlk5JYNqnjek-2YNaWiKiFm?usp=drive_link).
+  Aquí alojaré las colectas de terreno (rovers) y las sincrónicas de la
+  base. **¡IMPORTANTE! El enlace tendrá contenido tan pronto encuentre
+  el tiempo para subir las colecta de datos de terreno y las de la o las
+  bases**. Mientras tanto, puedes practicar con [estos datos
+  antiguos](https://drive.google.com/drive/folders/1bEyVLVSQo7-bkQr5q4Tt_-ookPERQKBH?usp=drive_link)
+  y descarga tus datos. Normalmente, los datos que hayas obtenido con el
+  o los rovers, llevarán tu nombre como prefijo (al inicio).
 
-- Con la herramienta `Converter`, convierte tus archivos extensión .log
-  (de base y de rover) a formato RINEX (elige el formato 3.04, marca y
-  desmarca la opción Obs2Range, y desmarca teqc). Documéntate sobre el
-  formato RINEX.
+- Si tus archivos son Unicore (podrían ser de extensión `.log` o
+  `.unc`), los podrás convertir con la herramienta `Converter`; ahora
+  también RTKLIB-EX los convierte, pero había algunos problemillas meses
+  antes de redactarse esta práctica (desconozco si se resolvieron; en
+  las últimas releases se asegura que sí, pero habría que hacer
+  pruebas). Te recomiendo que conviertas tus archivos Unicore (`.log` o
+  `.unc`) (de base o de rover) a formato RINEX (elige el formato 3.04,
+  marca y desmarca la opción Obs2Range, y desmarca teqc). Documéntate
+  sobre el formato RINEX.
 
 - Con cualquiera de las herramientas de RTKLib, denominadas, RTKCONV
-  (interfaz gráfica) o `convbin` (terminal), convierte el archivo de la
-  base de extensión .ubx a RINEX.
+  (interfaz gráfica) o `convbin` (terminal), convierte los archivos de
+  formato U-blox (extensión `.ubx`) a RINEX v3.04
 
 - Evalúa su calidad:
 
