@@ -20,7 +20,7 @@ always_allow_html: true
 ---
 
 
-```{css, eval=T}
+```{css, include=F, echo=F, eval=T}
 <style>
 .vlines table {
   border-collapse: collapse;

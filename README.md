@@ -5,44 +5,6 @@ Domingo (UASD)</small>
 El Tali
 2025-09-20
 
-``` css
-<style>
-.vlines table {
-  border-collapse: collapse;
-  margin: 0 auto;            /* opcional: centrar */
-}
-.vlines th, .vlines td {
-  padding: 0.4rem 0.6rem;
-  border-top: 1px solid #ccc;    /* líneas horizontales */
-  border-bottom: 1px solid #ccc; /* líneas horizontales */
-}
-.vlines td + td, .vlines th + th {
-  border-left: 1px solid #ccc;   /* ← líneas verticales entre columnas */
-}
-/* opcional: borde exterior */
-.vlines table { border: 1px solid #ccc; }
-</style>
-```
-
-<style type="text/css">
-<style>
-.vlines table {
-  border-collapse: collapse;
-  margin: 0 auto;            /* opcional: centrar */
-}
-.vlines th, .vlines td {
-  padding: 0.4rem 0.6rem;
-  border-top: 1px solid #ccc;    /* líneas horizontales */
-  border-bottom: 1px solid #ccc; /* líneas horizontales */
-}
-.vlines td + td, .vlines th + th {
-  border-left: 1px solid #ccc;   /* ← líneas verticales entre columnas */
-}
-/* opcional: borde exterior */
-.vlines table { border: 1px solid #ccc; }
-</style>
-</style>
-
 Versión HTML (quizá más legible),
 [aquí](https://geomorfologia-master.github.io/datos-gnss-soluciones-fijas/README.html)
 
