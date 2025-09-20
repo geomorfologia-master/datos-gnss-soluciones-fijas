@@ -8,6 +8,10 @@ El Tali
 Versión HTML (quizá más legible),
 [aquí](https://geomorfologia-master.github.io/datos-gnss-soluciones-fijas/README.html)
 
+<img src="img/paresen_felise.jpg" style="width:50.0%" /><br> **Foto:
+José Gabriel Almánzar/Christian**. El trabajo de campo en el campus no
+es que sea “campo a través”, pero parece que pone a la gente contenta.
+
 # Fecha/hora de entrega
 
 **Ver portal de la asignatura**
