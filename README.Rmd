@@ -19,6 +19,8 @@ always_allow_html: true
 # bibliography: references.bib
 ---
 
+
+```{css, eval=T}
 <style>
 .vlines table {
   border-collapse: collapse;
@@ -35,9 +37,10 @@ always_allow_html: true
 /* opcional: borde exterior */
 .vlines table { border: 1px solid #ccc; }
 </style>
+```
 
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, eval=T}
 knitr::opts_chunk$set(
   echo = TRUE,
   warning = FALSE,
@@ -47,7 +50,7 @@ knitr::opts_chunk$set(
   fig.retina = 4)
 ```
 
-```{r, include=F}
+```{r, include=F, eval=T}
 output_format <- knitr::opts_knit$get("rmarkdown.pandoc.to")
 repo_url <- system("git config --get remote.origin.url", intern = TRUE)
 repo_name <- sub(".git$", "", basename(repo_url))
@@ -56,7 +59,7 @@ rmd_filename <- tools::file_path_sans_ext(basename(knitr::current_input()))
 github_pages_url <- paste0("https://", org_name, ".github.io/", repo_name, "/", rmd_filename, ".html")
 ```
 
-```{r, results='asis', echo=F}
+```{r, results='asis', echo=F, eval=T}
 if (grepl('gfm', output_format)) {
   cat('Versión HTML (quizá más legible), [aquí](', github_pages_url, ')\n', sep = '')
 } else if (output_format == 'latex') {
