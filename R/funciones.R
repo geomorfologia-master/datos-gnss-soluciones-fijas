@@ -6,7 +6,9 @@ pos_read_violin <- function(files,
                             export_layer = "pos_points",
                             utm_zone_override = NULL,
                             plot_stat = c("raw","z","absdev"),
-                            stat_by = c("archivo","global")) {
+                            stat_by = c("archivo","global"),
+                            x_label_wrap = 15,
+                            x_break_chars = c("-", "_")) {
   coord_type <- match.arg(coord_type)
   export <- match.arg(export)
   plot_stat <- match.arg(plot_stat)
@@ -17,6 +19,51 @@ pos_read_violin <- function(files,
     library(ggplot2); library(sf);     library(purrr)
     library(scales)
   })
+  
+  # ---------- helper para wrap inteligente en eje X ----------
+  smart_wrap_labels <- function(x, width = 15, break_chars = c("-", "_")) {
+    if (!is.finite(width) || width <= 0) return(x)
+    
+    wrap_one <- function(s) {
+      if (is.na(s)) return(s)
+      chars <- strsplit(s, "", useBytes = TRUE)[[1]]
+      n <- length(chars)
+      if (n <= width) return(s)
+      
+      out <- character(0)
+      line_start <- 1
+      last_pref_break <- NA_integer_
+      i <- 1
+      
+      while (i <= n) {
+        ch <- chars[i]
+        if (ch %in% break_chars) last_pref_break <- i
+        
+        # ¿se excedió el ancho?
+        if ((i - line_start + 1) > width) {
+          if (!is.na(last_pref_break) && last_pref_break >= line_start) {
+            # Cortar justo después del separador preferido más cercano
+            out <- c(out, paste0(paste(chars[line_start:last_pref_break], collapse = ""), "\n"))
+            line_start <- last_pref_break + 1
+            last_pref_break <- NA_integer_
+            # No avanzamos i aquí: re-evaluamos desde el nuevo inicio de línea
+          } else {
+            # Sin separador en el tramo: cortar donde toque
+            out <- c(out, paste0(paste(chars[line_start:(i-1)], collapse = ""), "\n"))
+            line_start <- i
+          }
+        } else {
+          i <- i + 1
+        }
+      }
+      
+      out <- c(out, paste(chars[line_start:n], collapse = ""))
+      paste(out, collapse = "")
+    }
+    
+    vapply(x, wrap_one, character(1), USE.NAMES = FALSE)
+  }
+  # -----------------------------------------------------------
   
   rx <- paste0(
     "^\\s*",
@@ -111,21 +158,16 @@ pos_read_violin <- function(files,
            E, N, utm_zone, hemisphere,
            Lat_o_X, Lon_o_Y, H_o_Z, coord_source)
   
-  # ---- Datos para el plot (E, N, H en metros) ----
+  # Datos para el plot
   df_plot <- data_out %>%
     transmute(archivo,
               Easting_m = E, Northing_m = N, Height_m = height_m) %>%
     pivot_longer(c(Easting_m, Northing_m, Height_m),
                  names_to = "Componente", values_to = "Valor")
   
-  # ---- Transformación opcional de la variable a graficar ----
-  # z-score o desviación absoluta respecto de la media
+  # Transformación opcional
   if (plot_stat != "raw") {
-    if (stat_by == "archivo") {
-      grp <- c("archivo", "Componente")
-    } else { # global por componente
-      grp <- "Componente"
-    }
+    grp <- if (stat_by == "archivo") c("archivo","Componente") else "Componente"
     df_plot <- df_plot %>%
       group_by(across(all_of(grp))) %>%
       mutate(
@@ -141,18 +183,12 @@ pos_read_violin <- function(files,
       select(-mean_val, -sd_val)
   }
   
-  # Etiqueta de eje Y y formato según estadístico
   y_lab <- dplyr::case_when(
     plot_stat == "raw"    ~ "Magnitud (m)",
     plot_stat == "z"      ~ "Z-score (adimensional)",
     plot_stat == "absdev" ~ "Desv. absoluta respecto de la media (m)"
   )
-  y_fmt <- if (plot_stat == "z") {
-    scales::label_number(accuracy = 0.01)  # z suele leerse cómodo con 2 decimales
-  } else {
-    scales::label_number(accuracy = 0.001) # metros con 3 decimales
-  }
-  
+  y_fmt <- if (plot_stat == "z") scales::label_number(accuracy = 0.01) else scales::label_number(accuracy = 0.001)
   sub_stat <- dplyr::case_when(
     plot_stat == "raw"    ~ "Valores brutos",
     plot_stat == "z"      ~ paste0("Z-score · agrupación: ", stat_by),
@@ -165,6 +201,7 @@ pos_read_violin <- function(files,
                alpha = 0.55, size = 1) +
     facet_wrap(~ Componente, nrow = 1, ncol = 3, scales = "free_y") +
     scale_y_continuous(labels = y_fmt) +
+    scale_x_discrete(labels = function(x) smart_wrap_labels(x, width = x_label_wrap, break_chars = x_break_chars)) +
     labs(x = "Archivo (.pos)", y = y_lab,
          title = "Distribución por componente en UTM (WGS84)",
          subtitle = paste0(
@@ -182,7 +219,6 @@ pos_read_violin <- function(files,
       legend.position = "none"
     )
   
-  # ---- Exportación (igual que antes) ----
   export_file <- NULL
   if (export != "none") {
     if (is.null(export_path)) {
