@@ -68,7 +68,7 @@ if (grepl('gfm', output_format)) {
 ```
 
 ![](img/paresen_felise.jpg){width="50%"}<br>
-**Foto: José Gabriel Almánzar/Christian**. El trabajo de campo en el campus no es que sea "campo a través", pero parece que pone a la gente contenta.
+**Foto: José Gabriel Almánzar/Christian Gómez**. El trabajo de campo en el campus no es que sea "campo a través", pero parece que pone a la gente contenta.
 
 # Fecha/hora de entrega
 
