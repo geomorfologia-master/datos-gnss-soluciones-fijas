@@ -3,14 +3,15 @@ fijas<small><br>Geomorfología (GEO-114)<br>Universidad Autónoma de Santo
 Domingo (UASD)</small>
 ================
 El Tali
-2025-09-20
+2025-09-27
 
 Versión HTML (quizá más legible),
 [aquí](https://geomorfologia-master.github.io/datos-gnss-soluciones-fijas/README.html)
 
 <img src="img/paresen_felise.jpg" style="width:50.0%" /><br> **Foto:
-José Gabriel Almánzar/Christian**. El trabajo de campo en el campus no
-es que sea “campo a través”, pero parece que pone a la gente contenta.
+José Gabriel Almánzar/Christian Gómez**. El trabajo de campo en el
+campus no es que sea “campo a través”, pero parece que pone a la gente
+contenta.
 
 # Fecha/hora de entrega
 
@@ -200,7 +201,7 @@ por PPP:
   - Puerto: 2101
   - Punto de montaje: `geofis_ovni`
 - Si visitas esta ruta, podrás ver la coordenada en distintos formatos:
-  <http://rtk2go.com:2101/SNIP>::MOUNTPT?NAME=geofis_ovni
+  <http://rtk2go.com:2101/SNIP::MOUNTPT?NAME=geofis_ovni>.
 - Esta base se encuentra en el Distrito Nacional de Santo Domingo, y ha
   estado transmitiendo mensajes RTCM desde 2021. La coordenada de la
   base transmitida a partir de 08/11/2021 (desde aprox 11.02 am hora
@@ -239,7 +240,7 @@ carpeta “bases”). Estos son los detalles de la solución obtenida:
   - Puerto: 2101
   - Punto de montaje: `geofis_mbase`
 - Si visitas esta ruta, podrás ver la coordenada en distintos formatos:
-  <http://rtk2go.com:2101/SNIP>::MOUNTPT?NAME=geofis_mbase
+  <http://rtk2go.com:2101/SNIP::MOUNTPT?NAME=geofis_mbase>.
 - Esta base se encuentra en el Distrito Nacional de Santo Domingo, y ha
   estado transmitiendo mensajes RTCM desde finales de 2024. La
   coordenada de la base transmitida a partir de 19/11/2024 es la
@@ -270,7 +271,15 @@ carpeta “bases”). Estos son los detalles de la solución obtenida:
 - Usa el servicio de Posicionamiento Horizontal Dependiente de la Fecha
   (Horizontal Time-Dependent Positioning, HTDP) del Servicio Geodésico
   Nacional de Estados Unidos (NGS, NOAA) para convertir la coordenada de
-  la base a WGS84.
+  la base a WGS84. El servicio tiene como página principal esta:
+  <https://geodesy.noaa.gov/TOOLS/Htdp/Htdp.shtml>. Allí, presiona el
+  enlace [“Transform positions between reference frames and/or dates.
+  (Note)”](https://geodesy.noaa.gov/TOOLS/Htdp/Htdp_transform.shtml), y
+  luego en [Individual points entered
+  interactively](https://geodesy.noaa.gov/cgi-bin/HTDP/htdp.prl?f1=4&f2=1).
+  Configura los campos de acuerdo con las indicaciones de la página.
+  Recuerda que vas a transformar desde un “ITRF” (14 o 20) a “WGS84
+  original (Transit)”.
 
 Conserva dicha coordenada, pues es la que deberás usar en RTKLib-Ex para
 generar las soluciones fijas por posproceso.

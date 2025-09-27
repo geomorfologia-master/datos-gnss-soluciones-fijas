@@ -11,7 +11,7 @@
 
 <meta name="author" content="El Tali" />
 
-<meta name="date" content="2025-09-23" />
+<meta name="date" content="2025-09-27" />
 
 <title>Prácticas de aula 3 (PA03). Procesa datos GNSS y obtén soluciones fijas Geomorfología (GEO-114) Universidad Autónoma de Santo Domingo (UASD)</title>
 
@@ -427,7 +427,7 @@ display: none;
 
 <h1 class="title toc-ignore">Prácticas de aula 3 (PA03). Procesa datos GNSS y obtén soluciones fijas<small><br>Geomorfología (GEO-114)<br>Universidad Autónoma de Santo Domingo (UASD)</small></h1>
 <h4 class="author">El Tali</h4>
-<h4 class="date">2025-09-23</h4>
+<h4 class="date">2025-09-27</h4>
 
 </div>
 
@@ -548,7 +548,7 @@ display: none;
 <li>Puerto: 2101</li>
 <li>Punto de montaje: <code>geofis_ovni</code></li>
 </ul></li>
-<li>Si visitas esta ruta, podrás ver la coordenada en distintos formatos: <a href="http://rtk2go.com:2101/SNIP" class="uri">http://rtk2go.com:2101/SNIP</a>::MOUNTPT?NAME=geofis_ovni</li>
+<li>Si visitas esta ruta, podrás ver la coordenada en distintos formatos: <a href="http://rtk2go.com:2101/SNIP::MOUNTPT?NAME=geofis_ovni">http://rtk2go.com:2101/SNIP::MOUNTPT?NAME=geofis_ovni</a>.</li>
 <li>Esta base se encuentra en el Distrito Nacional de Santo Domingo, y ha estado transmitiendo mensajes RTCM desde 2021. La coordenada de la base transmitida a partir de 08/11/2021 (desde aprox 11.02 am hora local SD, de ese día) es la siguiente: <strong>18.4682098638889 -69.9101351555556 10.764</strong> (ver otros formatos abajo).</li>
 <li>Esta coordenada fue generada como una solución PPP usando 7 días de observaciones brutas mediante el Sistema Canadiense de Referencia Espacial Posicionamiento Puntual Preciso (<em>Canadian Spatial Reference System Precise Point Positioning</em>, CSRS-PPP) de <em>Natural Resources Canada</em> (NRCAN) (en lo adelante “CSRS-PPP-NRCAN”) EN MODO FINAL (efemérides precisas) (investiga que es CSRS-PPP de NRCAN).</li>
 <li>Dejo a continuación los detalles de la solución obtenida, contenida en el archivo “observations.sum”:
@@ -573,7 +573,7 @@ display: none;
 <li>Puerto: 2101</li>
 <li>Punto de montaje: <code>geofis_mbase</code></li>
 </ul></li>
-<li>Si visitas esta ruta, podrás ver la coordenada en distintos formatos: <a href="http://rtk2go.com:2101/SNIP" class="uri">http://rtk2go.com:2101/SNIP</a>::MOUNTPT?NAME=geofis_mbase</li>
+<li>Si visitas esta ruta, podrás ver la coordenada en distintos formatos: <a href="http://rtk2go.com:2101/SNIP::MOUNTPT?NAME=geofis_mbase">http://rtk2go.com:2101/SNIP::MOUNTPT?NAME=geofis_mbase</a>.</li>
 <li>Esta base se encuentra en el Distrito Nacional de Santo Domingo, y ha estado transmitiendo mensajes RTCM desde finales de 2024. La coordenada de la base transmitida a partir de 19/11/2024 es la siguiente: <strong>18.45964924° -69.91668732° -11.582</strong> (ver otros formatos abajo).</li>
 <li>Esta coordenada fue generada como una solución PPP usando 2 días de observaciones brutas mediante el Sistema Canadiense de Referencia Espacial Posicionamiento Puntual Preciso (<em>Canadian Spatial Reference System Precise Point Positioning</em>, CSRS-PPP) de <em>Natural Resources Canada</em> (NRCAN) (en lo adelante “CSRS-PPP-NRCAN”) EN MODO Ultra-Rapid (efemérides no precisas) (investiga los tipos de soluciones de CSRS-PPP-NRCAN).</li>
 <li>Dejo a continuación los detalles de la solución obtenida, contenida en el archivo “SALIDA.24O”:
@@ -590,7 +590,7 @@ display: none;
 <div id="transforma" class="section level2">
 <h2>Transforma</h2>
 <ul>
-<li>Usa el servicio de Posicionamiento Horizontal Dependiente de la Fecha (Horizontal Time-Dependent Positioning, HTDP) del Servicio Geodésico Nacional de Estados Unidos (NGS, NOAA) para convertir la coordenada de la base a WGS84.</li>
+<li>Usa el servicio de Posicionamiento Horizontal Dependiente de la Fecha (Horizontal Time-Dependent Positioning, HTDP) del Servicio Geodésico Nacional de Estados Unidos (NGS, NOAA) para convertir la coordenada de la base a WGS84. El servicio tiene como página principal esta: <a href="https://geodesy.noaa.gov/TOOLS/Htdp/Htdp.shtml">https://geodesy.noaa.gov/TOOLS/Htdp/Htdp.shtml</a>. Allí, presiona el enlace <a href="https://geodesy.noaa.gov/TOOLS/Htdp/Htdp_transform.shtml">“Transform positions between reference frames and/or dates. (Note)”</a>, y luego en <a href="https://geodesy.noaa.gov/cgi-bin/HTDP/htdp.prl?f1=4&amp;f2=1">Individual points entered interactively</a>. Configura los campos de acuerdo con las indicaciones de la página. Recuerda que vas a transformar desde un “ITRF” (14 o 20) a “WGS84 original (Transit)”.</li>
 </ul>
 <p>Conserva dicha coordenada, pues es la que deberás usar en RTKLib-Ex para generar las soluciones fijas por posproceso.</p>
 </div>
