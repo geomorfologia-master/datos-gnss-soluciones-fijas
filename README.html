@@ -445,7 +445,7 @@ display: none;
 <li><a href="#ejercicio-2.-prepara-las-observaciones-de-la-base-y-obtén-tu-solución-ppp" id="toc-ejercicio-2.-prepara-las-observaciones-de-la-base-y-obtén-tu-solución-ppp">Ejercicio 2. Prepara las observaciones de la base y obtén TU solución PPP</a>
 <ul>
 <li><a href="#une-los-archivos-horarios-de-la-base" id="toc-une-los-archivos-horarios-de-la-base">Une los archivos horarios de la base</a></li>
-<li><a href="#reduce-la-cadencia-a-15-segundos" id="toc-reduce-la-cadencia-a-15-segundos">Reduce la cadencia a 15 segundos</a>
+<li><a href="#reduce-la-cadencia-a-30-segundos" id="toc-reduce-la-cadencia-a-30-segundos">Reduce la cadencia a 30 segundos</a>
 <ul>
 <li><a href="#comprobaciones-reproducibles" id="toc-comprobaciones-reproducibles">Comprobaciones reproducibles</a></li>
 </ul></li>
@@ -619,17 +619,17 @@ display: none;
 <p>y documenta la sintaxis finalmente utilizada.</p>
 <p>Después de unirlos, comprueba que el archivo resultante contiene una serie temporal continua y que las horas inicial y final son las esperadas.</p>
 </div>
-<div id="reduce-la-cadencia-a-15-segundos" class="section level2">
-<h2>Reduce la cadencia a 15 segundos</h2>
-<p>Para el envío PPP no necesitamos conservar una observación por segundo. Genera una copia a <strong>15 s</strong>. GFZRNX puede realizar el remuestreo:</p>
+<div id="reduce-la-cadencia-a-30-segundos" class="section level2">
+<h2>Reduce la cadencia a 30 segundos</h2>
+<p>Para el envío PPP no necesitamos conservar una observación por segundo. Genera una copia a <strong>30 s</strong>. GFZRNX puede realizar el remuestreo:</p>
 <pre class="bash"><code>gfzrnx -finp ppp/base_unida_01s.obs \
-  -fout ppp/base_unida_15s.obs \
-  -smp 15</code></pre>
-<p>También puedes realizar el diezmado con <code>convbin</code> leyendo el RINEX y usando <code>-ti 15</code>. Por ejemplo:</p>
-<pre class="bash"><code>convbin -r rinex -v 3.04 -ti 15 \
-  -o ppp/base_unida_15s_convbin.obs \
+  -fout ppp/base_unida_30s.obs \
+  -smp 30</code></pre>
+<p>También puedes realizar el diezmado con <code>convbin</code> leyendo el RINEX y usando <code>-ti 30</code>. Por ejemplo:</p>
+<pre class="bash"><code>convbin -r rinex -v 3.04 -ti 30 \
+  -o ppp/base_unida_30s_convbin.obs \
   ppp/base_unida_01s.obs</code></pre>
-<p>No es obligatorio aplicar <strong>ambos</strong> procedimientos. Elige uno, pero debes demostrar de manera reproducible que el archivo enviado tiene una cadencia de 15 s.</p>
+<p>No es obligatorio aplicar <strong>ambos</strong> procedimientos. Elige uno, pero debes demostrar de manera reproducible que el archivo enviado tiene una cadencia de 30 s.</p>
 <div id="comprobaciones-reproducibles" class="section level3">
 <h3>Comprobaciones reproducibles</h3>
 <p>Incluye comandos que permitan demostrar, como mínimo:</p>
@@ -645,7 +645,7 @@ display: none;
 </div>
 <div id="obtén-una-solución-independiente-para-la-coordenada-de-la-base" class="section level2">
 <h2>Obtén una solución independiente para la coordenada de la base</h2>
-<p><strong>Cada estudiante deberá enviar personalmente su RINEX de 15 s a uno de estos servicios y conservar el informe de salida:</strong></p>
+<p><strong>Cada estudiante deberá enviar personalmente su RINEX de 30 s a uno de estos servicios y conservar el informe de salida:</strong></p>
 <ul>
 <li>CSRS-PPP, Natural Resources Canada (NRCan);</li>
 <li>OPUS, National Geodetic Survey (NGS/NOAA);</li>

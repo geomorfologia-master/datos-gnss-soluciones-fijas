@@ -246,29 +246,29 @@ Después de unirlos, comprueba que el archivo resultante contiene una
 serie temporal continua y que las horas inicial y final son las
 esperadas.
 
-## Reduce la cadencia a 15 segundos
+## Reduce la cadencia a 30 segundos
 
 Para el envío PPP no necesitamos conservar una observación por segundo.
-Genera una copia a **15 s**. GFZRNX puede realizar el remuestreo:
+Genera una copia a **30 s**. GFZRNX puede realizar el remuestreo:
 
 ``` bash
 gfzrnx -finp ppp/base_unida_01s.obs \
-  -fout ppp/base_unida_15s.obs \
-  -smp 15
+  -fout ppp/base_unida_30s.obs \
+  -smp 30
 ```
 
 También puedes realizar el diezmado con `convbin` leyendo el RINEX y
-usando `-ti 15`. Por ejemplo:
+usando `-ti 30`. Por ejemplo:
 
 ``` bash
-convbin -r rinex -v 3.04 -ti 15 \
-  -o ppp/base_unida_15s_convbin.obs \
+convbin -r rinex -v 3.04 -ti 30 \
+  -o ppp/base_unida_30s_convbin.obs \
   ppp/base_unida_01s.obs
 ```
 
 No es obligatorio aplicar **ambos** procedimientos. Elige uno, pero
 debes demostrar de manera reproducible que el archivo enviado tiene una
-cadencia de 15 s.
+cadencia de 30 s.
 
 ### Comprobaciones reproducibles
 
@@ -285,7 +285,7 @@ Puedes complementar `gfzrnx` con comandos del sistema (`ls`, `wc`,
 
 ## Obtén una solución independiente para la coordenada de la base
 
-**Cada estudiante deberá enviar personalmente su RINEX de 15 s a uno de
+**Cada estudiante deberá enviar personalmente su RINEX de 30 s a uno de
 estos servicios y conservar el informe de salida:**
 
 - CSRS-PPP, Natural Resources Canada (NRCan);
