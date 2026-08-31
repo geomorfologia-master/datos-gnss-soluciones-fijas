@@ -11,7 +11,7 @@
 
 <meta name="author" content="El Tali" />
 
-<meta name="date" content="2025-09-27" />
+<meta name="date" content="2026-08-31" />
 
 <title>Prácticas de aula 3 (PA03). Procesa datos GNSS y obtén soluciones fijas Geomorfología (GEO-114) Universidad Autónoma de Santo Domingo (UASD)</title>
 
@@ -427,7 +427,7 @@ display: none;
 
 <h1 class="title toc-ignore">Prácticas de aula 3 (PA03). Procesa datos GNSS y obtén soluciones fijas<small><br>Geomorfología (GEO-114)<br>Universidad Autónoma de Santo Domingo (UASD)</small></h1>
 <h4 class="author">El Tali</h4>
-<h4 class="date">2025-09-27</h4>
+<h4 class="date">2026-08-31</h4>
 
 </div>
 
@@ -436,23 +436,27 @@ display: none;
 <li><a href="#fechahora-de-entrega" id="toc-fechahora-de-entrega">Fecha/hora de entrega</a></li>
 <li><a href="#objetivos" id="toc-objetivos">Objetivos</a></li>
 <li><a href="#recursos" id="toc-recursos">Recursos</a></li>
+<li><a href="#datos-y-geometría-de-la-práctica" id="toc-datos-y-geometría-de-la-práctica">Datos y geometría de la práctica</a></li>
 <li><a href="#ejercicio-1.-descarga-tus-datos-conviértelos-evalúa-su-calidad-descríbelos" id="toc-ejercicio-1.-descarga-tus-datos-conviértelos-evalúa-su-calidad-descríbelos">Ejercicio 1. Descarga tus datos, conviértelos, evalúa su calidad, descríbelos</a>
 <ul>
 <li><a href="#convierte-a-rinex" id="toc-convierte-a-rinex">Convierte a RINEX</a></li>
 <li><a href="#evalúa-la-calidad" id="toc-evalúa-la-calidad">Evalúa la calidad</a></li>
 </ul></li>
-<li><a href="#ejercicio-2.-convierte-la-coordenada-la-base-a-wgs84" id="toc-ejercicio-2.-convierte-la-coordenada-la-base-a-wgs84">Ejercicio 2. Convierte la coordenada la base a WGS84</a>
+<li><a href="#ejercicio-2.-prepara-las-observaciones-de-la-base-y-obtén-tu-solución-ppp" id="toc-ejercicio-2.-prepara-las-observaciones-de-la-base-y-obtén-tu-solución-ppp">Ejercicio 2. Prepara las observaciones de la base y obtén TU solución PPP</a>
 <ul>
-<li><a href="#coordenadas-de-las-bases" id="toc-coordenadas-de-las-bases">Coordenadas de las bases</a>
+<li><a href="#une-los-archivos-horarios-de-la-base" id="toc-une-los-archivos-horarios-de-la-base">Une los archivos horarios de la base</a></li>
+<li><a href="#reduce-la-cadencia-a-15-segundos" id="toc-reduce-la-cadencia-a-15-segundos">Reduce la cadencia a 15 segundos</a>
 <ul>
-<li><a href="#base-u-blox" id="toc-base-u-blox">Base u-blox</a></li>
-<li><a href="#base-unicore" id="toc-base-unicore">Base Unicore</a></li>
+<li><a href="#comprobaciones-reproducibles" id="toc-comprobaciones-reproducibles">Comprobaciones reproducibles</a></li>
 </ul></li>
-<li><a href="#transforma" id="toc-transforma">Transforma</a></li>
+<li><a href="#obtén-una-solución-independiente-para-la-coordenada-de-la-base" id="toc-obtén-una-solución-independiente-para-la-coordenada-de-la-base">Obtén una solución independiente para la coordenada de la base</a></li>
+<li><a href="#marco-de-referencia-no-transformes-la-solución-a-wgs84-transit" id="toc-marco-de-referencia-no-transformes-la-solución-a-wgs84-transit">Marco de referencia: no transformes la solución a WGS84 (Transit)</a></li>
 </ul></li>
-<li><a href="#ejercicio-3.-genera-soluciones-fijas-evalúa-el-resultado" id="toc-ejercicio-3.-genera-soluciones-fijas-evalúa-el-resultado">Ejercicio 3. Genera soluciones fijas, evalúa el resultado</a>
+<li><a href="#ejercicio-3.-genera-soluciones-fijas-ppk-y-evalúa-el-resultado" id="toc-ejercicio-3.-genera-soluciones-fijas-ppk-y-evalúa-el-resultado">Ejercicio 3. Genera soluciones fijas PPK y evalúa el resultado</a>
 <ul>
-<li><a href="#genera-soluciones-fijas" id="toc-genera-soluciones-fijas">Genera soluciones fijas</a></li>
+<li><a href="#prepara-la-configuración-reproducible-de-rtklib-ex" id="toc-prepara-la-configuración-reproducible-de-rtklib-ex">Prepara la configuración reproducible de RTKLIB-EX</a></li>
+<li><a href="#antena-arp-pcoapc-y-jalón" id="toc-antena-arp-pcoapc-y-jalón">Antena, ARP, PCO/APC y jalón</a></li>
+<li><a href="#genera-las-soluciones" id="toc-genera-las-soluciones">Genera las soluciones</a></li>
 <li><a href="#representa-tabular-y-cartográficamente-compara" id="toc-representa-tabular-y-cartográficamente-compara">Representa tabular y cartográficamente, compara</a>
 <ul>
 <li><a href="#representación-tabular" id="toc-representación-tabular">Representación tabular</a></li>
@@ -484,169 +488,299 @@ display: none;
 <div id="objetivos" class="section level1">
 <h1>Objetivos</h1>
 <ol>
-<li><p><strong>Familiarizarse con el procesamiento de datos GNSS</strong>: Los y las estudiantes aprenderán a descargar, convertir y analizar datos GNSS recolectados en el campo utilizando diferentes herramientas, con el fin de obtener soluciones precisas de posición.</p></li>
-<li><p><strong>Evaluar la calidad de datos GNSS crudos</strong>: A través de la inspección visual de los archivos en formato RINEX y el uso de herramientas especializadas como RTKLib, los estudiantes identificarán posibles problemas en las observaciones, como saltos de ciclo o interrupciones en las señales.</p></li>
-<li><p><strong>Convertir coordenadas a WGS84</strong>: Los estudiantes utilizarán el servicio HTDP del NGS (NOAA) para convertir las coordenadas obtenidas del procesamiento GNSS a WGS84, ajustándose a las normas de referencia geodésica internacional.</p></li>
-<li><p><strong>Generar soluciones fijas mediante posprocesamiento GNSS</strong>: A través de herramientas de posprocesamiento como RTKPOST, los estudiantes utilizarán las coordenadas de la base para obtener soluciones de alta precisión para las coordenadas del rover, consolidando el ciclo de procesamiento de datos GNSS.</p></li>
+<li><p><strong>Familiarizarse con un flujo reproducible de procesamiento GNSS</strong>: convertir observaciones crudas a RINEX, preparar observaciones estáticas de una base, obtener de forma independiente una coordenada precisa mediante PPP y utilizarla posteriormente para PPK.</p></li>
+<li><p><strong>Evaluar la calidad de datos GNSS crudos</strong>: mediante inspección de los archivos RINEX y herramientas de RTKLIB-EX, identificar problemas como interrupciones, saltos de ciclo (<em>cycle slips</em>), geometría desfavorable o pérdida de observaciones.</p></li>
+<li><p><strong>Comprender el papel del marco de referencia y de la época de las coordenadas</strong>: interpretar correctamente una solución PPP expresada en ITRF/IGS y su época, y comprender por qué <strong>no es necesario transformar dicha coordenada al WGS84 original (Transit) para realizar el PPK con RTKLIB-EX</strong> cuando la coordenada PPP y las observaciones corresponden a la misma época y se emplean productos GNSS modernos.</p></li>
+<li><p><strong>Obtener de manera independiente la coordenada precisa de la base</strong>: cada estudiante preparará las observaciones estáticas de la base y enviará personalmente el RINEX resultante a un servicio PPP/posprocesamiento como CSRS-PPP de NRCan, OPUS o AUSPOS.</p></li>
+<li><p><strong>Generar soluciones fijas mediante PPK</strong>: procesar aproximadamente 120 segundos de observaciones tomadas en un mismo punto del campus con dos tipos de rover, Unicore (triple frecuencia) y u-blox (doble frecuencia), y comparar los resultados.</p></li>
+<li><p><strong>Documentar el flujo mediante código reproducible</strong>: aunque RTKLIB-EX dispone de interfaces gráficas, se priorizará el uso de <code>convbin</code>, <code>rnx2rtkp</code> y <code>gfzrnx</code> desde scripts ejecutables y documentados en este cuaderno.</p></li>
 </ol>
 </div>
 <div id="recursos" class="section level1">
 <h1>Recursos</h1>
 <ul>
-<li><p>Vídeo</p>
+<li><p><a href="https://drive.google.com/drive/folders/1QwhfmtxwDR04yZ38Cwc9Fkcq6g_mmFg0?usp=drive_link"><strong>Carpeta de Drive con archivos fuente de la práctica (base y rovers)</strong></a></p></li>
+<li><p>Software:</p>
 <ul>
-<li><p><a href="https://drive.google.com/file/d/1j4YXlBTxb_ouYsBzqIQgPyhpCdn09WoN/view?usp=drive_link">Vídeo de apoyo para obtener soluciones fijas usando observables del rover y observables de ocupación estática de la base</a>. El vídeo muestra el proceso completo de obtener soluciones fijas por posproceso. Lo grabé hace unos dos años en el aula FC-203 para estudiantes que estaban, en ese momento, usando algunas de las PC en dicho espacio (escucharán personas preguntando sobre el proceso). La versión mencionada de RTKLib en el vídeo es vieja, así que descarga la más reciente (ver abajo enlace para descargar RTKLib-Ex). Otro detalle importante: dado que en dicha práctica colocamos una base móvil, en el vídeo me verán obtener las coordenadas precisas de dicha base móvil. <strong>En este caso, es decir, en la práctica actual, la base es fija, y sus coordenadas precisas ya fueron obtenidas por medio de solución PPP (ver más abajo), por lo que no tendrás que obtener las coordenadas de la base por solución PPP</strong>. Eso sí, tendrás que convertir la coordenada que se encuentra actualmente en ITRF a WGS84, pues RTKLib-Ex sólo trabaja con coordenadas en WGS84.</p></li>
-<li><p><a href="https://drive.google.com/file/d/1j4YXlBTxb_ouYsBzqIQgPyhpCdn09WoN/view?usp=drive_link">Vídeo de apoyo para convertir coordenada ITRF a WGS84 clase</a></p></li>
+<li><p><a href="https://github.com/rtklibexplorer/RTKLIB/releases">RTKLIB-EX, antiguamente “Demo5”</a>. Usa la versión más reciente disponible. RTKLIB-EX proporciona tanto aplicaciones con interfaz gráfica como programas equivalentes para terminal: RTKCONV/<code>convbin</code> para conversión y RTKPOST/<code>rnx2rtkp</code> para posproceso.</p></li>
+<li><p><a href="https://gnss.gfz.de/services/gfzrnx">GFZRNX</a>, herramienta para comprobar, manipular, unir, dividir, seleccionar y diezmar archivos RINEX. Existen ejecutables para Windows y GNU/Linux. Si prefieres trabajar en un entorno Linux desde Windows, puedes usar WSL (<em>Windows Subsystem for Linux</em>).</p></li>
 </ul></li>
 </ul>
-<p>-Software:</p>
+<blockquote>
+<p><strong>Preferencia de esta práctica:</strong> puedes utilizar RTKCONV y RTKPOST para explorar las opciones y comprobar visualmente configuraciones, pero el procesamiento que reportes debe quedar reproducible. Por ello, es preferible ejecutar <code>convbin</code>, <code>gfzrnx</code> y <code>rnx2rtkp</code> mediante scripts y conservar dichos scripts en tu repositorio.</p>
+</blockquote>
+</div>
+<div id="datos-y-geometría-de-la-práctica" class="section level1">
+<h1>Datos y geometría de la práctica</h1>
+<p>Cada estudiante dispone de dos colectas cortas realizadas aproximadamente durante <strong>120 segundos en el mismo punto del campus de la UASD</strong>:</p>
 <ul>
-<li><p>Converter de Unicore. Para convertir archivos Unicore (normalmente son de extensión <code>.log</code>, pero a veces vienen en extensión <code>.unc</code>), usar Converter, que se encuentra <a href="https://drive.google.com/drive/folders/1uh69yyfTBoJakwA3yxUPJAyA2rRIuzEO?usp=drive_link">aquí</a></p></li>
-<li><p><a href="https://github.com/rtklibexplorer/RTKLIB/releases">RTKLib-EX, antiguamente “Demo5”</a>. Descarga la versión más reciente de “RTKLIB-EX”. A la fecha de elaborar esta práctica, la más reciente era “RTKLIB-EX 2.5.0”. Con independencia de cuál sea la versión, si estás usando como sistema operativo Windows, te convendrá descargar el binario compilado, el cual se encuentra en el archivo de extensión <code>.zip</code> (por ejemplo <a href="https://github.com/rtklibexplorer/RTKLIB/archive/refs/tags/v2.5.0.zip">v2.5.0.zip</a>).</p></li>
-<li><p><a href="https://www.u-blox.com/en/product/u-center">u-center</a>. Sirve para convertir archivos de formato u-blox. ¡¡Importante, descarga la versión 25.06 o la que se encuentre vigente para trabajar con archivos generados por hardware F9; no descargues ni instales u-center 2 para esta práctica!!</p></li>
+<li>una colecta con rover <strong>Unicore</strong>, receptor GNSS de triple frecuencia;</li>
+<li>una colecta con rover <strong>u-blox</strong>, receptor GNSS de doble frecuencia.</li>
 </ul>
+<p>Durante la ocupación se utilizó un <strong>jalón</strong> de aluminio. Te facilitaré la altura empleada y la información necesaria de las antenas. Es importante distinguir:</p>
+<ul>
+<li><strong>ARP (<em>Antenna Reference Point</em>)</strong>: punto físico de referencia de la antena respecto del cual se mide normalmente la altura instrumental o del jalón;</li>
+<li><strong>PCO (<em>Phase Center Offset</em>)</strong>: vector que relaciona el ARP con el centro de fase medio de una señal/frecuencia;</li>
+<li><strong>APC (<em>Antenna Phase Center</em>)</strong>: centro de fase efectivo, que depende de la señal y puede variar con la dirección de llegada de la señal.</li>
+</ul>
+<p>Por tanto, <strong>no debes inventar una corrección APC</strong> ni restar automáticamente la longitud del jalón a una coordenada. Te proporcionaré la altura ARP–marca y, cuando corresponda, el tipo/modelo de antena o sus parámetros de calibración (PCO/PCV). Deberás declarar en tu informe qué punto representa finalmente tu solución: ARP o marca/punto del terreno.</p>
 </div>
 <div id="ejercicio-1.-descarga-tus-datos-conviértelos-evalúa-su-calidad-descríbelos" class="section level1">
 <h1>Ejercicio 1. Descarga tus datos, conviértelos, evalúa su calidad, descríbelos</h1>
 <ul>
-<li>Visita <a href="https://drive.google.com/drive/folders/1i5vjg74UvPlk5JYNqnjek-2YNaWiKiFm?usp=drive_link">esta carpeta de Drive</a>. Aquí alojé las colectas de terreno (rovers) y las sincrónicas de la base. Normalmente, los datos que hayas obtenido con el o los rovers, llevarán tu nombre como prefijo (al inicio); los de las bases no llevan prefijos, porque aplican para todos.</li>
+<li><p>Descarga desde la <a href="https://drive.google.com/drive/folders/1QwhfmtxwDR04yZ38Cwc9Fkcq6g_mmFg0?usp=drive_link"><strong>carpeta de Drive con archivos fuente de la práctica (base y rovers)</strong></a> tus dos colectas de rover y los archivos horarios correspondientes a la base.</p></li>
+<li><p>Organiza el proyecto, por ejemplo (no está así estructurado en la carpeta de Drive, y esto es sólo una sugerencia, puedes organizar como prefieras, pero siguiendo un orden):</p></li>
 </ul>
+<pre class="text"><code>gnss/
+├── raw/
+│   ├── base/
+│   └── rover/
+├── rinex/
+│   ├── base/
+│   └── rover/
+├── ppp/
+├── ppk/
+└── scripts/</code></pre>
 <div id="convierte-a-rinex" class="section level2">
 <h2>Convierte a RINEX</h2>
-<p>Convierte tus archivos de observaciones crudas (<em>raw</em>) a formato RINEX v3.04. Las observaciones crudas contienen las mediciones GNSS (pseudorango, fase portadoras, doppler, SNR, etc.) y las efemérides (órbitas de los satélites). Los archivos de observaciones crudas pueden estar en distintos formatos, dependiendo del hardware usado. En este caso, tienes dos tipos de hardware.</p>
+<p>Convierte las observaciones crudas (<em>raw</em>) a <strong>RINEX 3.04</strong>. Los archivos crudos contienen observables GNSS (pseudorango, fase portadora, Doppler, SNR, etc.) y mensajes de navegación/efemérides transmitidas.</p>
+<p>En esta práctica encontrarás dos familias de receptores:</p>
+<ul>
+<li><strong>Unicore UM980</strong> (triple frecuencia): archivos extensión <code>.log</code>. La versión reciente de RTKLIB-EX utilizada en la asignatura permite convertir correctamente los archivos crudos Unicore (triple frecuencia) mediante RTKCONV o <code>convbin</code>. En versiones anteriores esta compatibilidad era incompleta, razón por la cual en prácticas antiguas se recurría al programa propietario Converter de Unicore.</li>
+<li><strong>u-blox ZED-F9P</strong> (doble frecuencia): los archivos <code>.ubx</code> son compatibles con RTKLIB desde hace mucho tiempo y pueden convertirse mediante RTKCONV o <code>convbin</code>.</li>
+</ul>
+<p>Para fines de comprobación, los detalles sobre hora exacta de colecta (hora GPS), persona que colectó y tipo de receptor) fueron facilitados vía el foro; transcribo dicha información a continuación:</p>
+<p>GPS time</p>
+<ul>
+<li>Talibán
+<ul>
+<li>Triple: 15:03:10</li>
+<li>Doble: 15:19:49</li>
+</ul></li>
+<li>Buanerges
+<ul>
+<li>Triple: 15:32:04</li>
+<li>Doble 15:38:59</li>
+</ul></li>
+<li>Juancito
+<ul>
+<li>Triple 15:45: 36</li>
+<li>Doble 16:00:12</li>
+</ul></li>
+<li>Rosamalia
+<ul>
+<li>Triple 16:07:16</li>
+<li>Doble 16:13:13</li>
+</ul></li>
+<li>Yeral
+<ul>
+<li>Triple 16:19:29</li>
+<li>Doble 16:27:58</li>
+</ul></li>
+<li>Camila
+<ul>
+<li>Triple 16:35:00</li>
+<li>Doble 16:42:08</li>
+</ul></li>
+</ul>
+<p>Puedes realizar una primera conversión con RTKCONV para familiarizarte con las opciones, pero debes dejar documentada una conversión reproducible con <code>convbin</code>.</p>
+<p>Ejemplo general para u-blox:</p>
+<pre class="bash"><code>convbin -r ubx -v 3.04 \
+  -o rinex/rover/rover_ublox.obs \
+  -n rinex/rover/rover_ublox.nav \
+  raw/rover/rover_ublox.ubx</code></pre>
+<p>Para Unicore, consulta primero la ayuda de <strong>la versión de RTKLIB-EX instalada</strong>:</p>
+<pre class="bash"><code>convbin -h</code></pre>
+<p>y usa el formato de entrada Unicore que reconozca esa versión. No copies mecánicamente una opción <code>-r</code> de versiones antiguas: documenta en el cuaderno el comando que realmente utilizaste y la versión de <code>convbin</code>.</p>
 <blockquote>
-<p>Tengo por costumbre guardar las soluciones RTK (las que se tomaron en terreno) junto con las observaciones crudas (me gusta quedarme con todo para tener más elementos de comparación). Por lo tanto, los archivos <code>.ubx</code> y <code>.log</code> contienen también soluciones RTK en formato NMEA, las cuales puedes visualizar en RTKPLOT (de RTKLib-Ex) o con cualquier otro software capaz de “parsear” sentencias NMEA (investiga qué son sentencias NMEA). Sin embargo, en esta práctica lo que te pido es que generes soluciones fijas por posproceso usando las observaciones crudas, y las efemérides contenidas en los archivos <code>.ubx</code> y <code>.log</code> y usando dos bases. Por lo tanto, no usarás las soluciones RTK que ya vienen en los archivos <code>.ubx</code> y <code>.log</code>, pero las tienes en los archivos por si quieres verlas y contrastar.</p>
+<p><strong>Importante:</strong> revisa el encabezado y algunas épocas del RINEX resultante. La conversión no debe considerarse correcta sólo porque el programa haya producido un archivo.</p>
 </blockquote>
-<p>Los archivos Unicore (casi seguramente tienen extensión <code>.log</code>, pero también podrían ser <code>.unc</code>), los podrás convertir con la herramienta <code>Converter</code>; ahora también RTKLIB-EX los convierte, pero había algunos problemillas meses atrás (desconozco si se resolvieron; en las últimas releases se asegura que sí, pero habría que hacer pruebas y no me fío). Te recomiendo que conviertas tus archivos Unicore (extensión <code>.log</code>), de base y de rover, a formato RINEX (v 3.04) usando la herramienta <code>Converter</code>; desmarca la opción Obs2Range, y desmarca teqc. Documéntate sobre el formato RINEX.</p>
-<p>En el caso de los archivos u-blox (extensión <code>.ubx</code>), con cualquiera de las herramientas de RTKLib, denominadas, RTKCONV (interfaz gráfica) o <code>convbin</code> (terminal), convierte los archivos de formato U-blox (extensión <code>.ubx</code>) a RINEX v3.04.</p>
-<p>En ambos casos, además de los observables, obtendrás las efemérides (órbitas de los satélites) en formato RINEX, las cuales necesitarás en el posproceso. Las efemérides tienen extensión .<code>.rnx</code>, <code>.nav</code>, o también <code>.##N</code>, <code>##.G</code>, <code>.##L</code>, <code>.##C</code> o <code>.##P</code> (donde <code>##</code> son dos dígitos que indican el año). Cuando RTKCONV convierte un archivo <code>.ubx</code> a RINEX, las efemérides se almacenan en un archivo <code>.nav</code> (todas las constelaciones mezcladas, GPS, GLONASS, Galileo, BeiDou). Por otro lado, <code>Converter</code> genera las efemérides en archivos separados por constelación, pero también produce un archivo mezclado de extensión <code>.##P</code> (en tu caso seguramente será <code>.25P</code>); dicho archivo es más cómodo de usar en RTKPOST, pues al igual que el <code>.nav</code>, contiene las efemérides de todas las constelaciones.</p>
 </div>
 <div id="evalúa-la-calidad" class="section level2">
 <h2>Evalúa la calidad</h2>
 <ul>
-<li><p>Simple inspección visual de los RINEX, tanto los de las bases como los de los rovers</p></li>
-<li><p>Con RTKLib, identificando si hay saltos de ciclo (<em>cycle slips</em>), observaciones interrumpidas, *DOP. Tendrás que documentarte al respecto.</p></li>
+<li>Realiza una inspección visual de los RINEX de la base y de ambos rovers.</li>
+<li>Comprueba fechas, horas, intervalo, constelaciones, tipos de observación y continuidad.</li>
+<li>Usa RTKPLOT u otra herramienta de RTKLIB-EX para inspeccionar disponibilidad de satélites, DOP, interrupciones y posibles <em>cycle slips</em>.</li>
+<li>Para los RINEX Unicore, presta atención a <code>SYS / # / OBS TYPES</code> y <code>SYS / PHASE SHIFT</code>. Si un servicio PPP emite advertencias relacionadas con <em>phase alignment</em>, no supongas automáticamente que el problema se corrige escribiendo ceros en <code>SYS / PHASE SHIFT</code>: documenta la advertencia y comprueba los observables realmente presentes.</li>
 </ul>
 </div>
 </div>
-<div id="ejercicio-2.-convierte-la-coordenada-la-base-a-wgs84" class="section level1">
-<h1>Ejercicio 2. Convierte la coordenada la base a WGS84</h1>
-<div id="coordenadas-de-las-bases" class="section level2">
-<h2>Coordenadas de las bases</h2>
-<p>Para obtener soluciones precisas (de error centimétrico y subcentimétrico) por posicionamiento diferencial (usando, como mínimo, un equipo base y otro móvil o “rover”) es necesario conocer las coordenadas precisas de la base. Dichas coordenadas pueden calcularse usando observaciones de larga duración; una semana de observaciones reduce el error al milímetro. Para esto, se usa software de escritorio (e.g. GAMIT/GLOBK) o servicios en línea. En esta práctica, te facilitaré las coordenadas de las bases que opero ya calculadas por un servicio en línea, por lo que no tendrás que obtenerlas, PEEEEERO, tendrás que transformarlas de ITRF a WGS.</p>
-<p>Aclarar que, para fines de reproducibilidad, necesito dejar documentado cómo obtuve las coordenadas de la base (algunos detalles no te servirán para la práctica, pero debes conocerlos). Igualmente, te explico a continuación cómo las bases que opero transmiten mensajes de corrección en tiempo real para RTK.</p>
-<p>Para hacer RTK, que es el mecanismo por el cual obtuvimos soluciones precisas en el terreno, usamos mensajes RTCM, los cuales son transmitidos por un caster NTRIP (busca y aprende sobre estos protocolos). Como cualquier <em>streaming</em> NTRIP, la coordenada de la base se transmite en uno de los mensajes RTCM (aprende sobre los identificadores numéricos de los mensajes RTCM). El servicio de transmisión que uso es rtk2go.com, un caster NTRIP basado en SNIP (busca SNIP y aprende sobre dicho software).</p>
-<div id="base-u-blox" class="section level3">
-<h3>Base u-blox</h3>
-<p>La “base u-blox” usa un módulo u-blox ZED-F9P (archivo extensión <code>.ubx</code> en la carpeta “bases”). Estos son los detalles de la solución obtenida por PPP:</p>
+<div id="ejercicio-2.-prepara-las-observaciones-de-la-base-y-obtén-tu-solución-ppp" class="section level1">
+<h1>Ejercicio 2. Prepara las observaciones de la base y obtén TU solución PPP</h1>
+<div id="une-los-archivos-horarios-de-la-base" class="section level2">
+<h2>Une los archivos horarios de la base</h2>
+<p>La base fue registrada en archivos horarios. <strong>Cada estudiante debe construir por sí mismo el RINEX continuo que enviará al servicio PPP</strong>.</p>
+<p>Usa <code>gfzrnx</code> para unir (<em>splice</em>) los RINEX horarios. El patrón exacto de nombres dependerá de los archivos descargados. Por ejemplo:</p>
+<pre class="bash"><code>gfzrnx -finp &quot;rinex/base/*.obs&quot; \
+  -fout ppp/base_unida_01s.obs</code></pre>
+<p>Si tu versión o sistema operativo trata los comodines de manera diferente, consulta:</p>
+<pre class="bash"><code>gfzrnx -h</code></pre>
+<p>y documenta la sintaxis finalmente utilizada.</p>
+<p>Después de unirlos, comprueba que el archivo resultante contiene una serie temporal continua y que las horas inicial y final son las esperadas.</p>
+</div>
+<div id="reduce-la-cadencia-a-15-segundos" class="section level2">
+<h2>Reduce la cadencia a 15 segundos</h2>
+<p>Para el envío PPP no necesitamos conservar una observación por segundo. Genera una copia a <strong>15 s</strong>. GFZRNX puede realizar el remuestreo:</p>
+<pre class="bash"><code>gfzrnx -finp ppp/base_unida_01s.obs \
+  -fout ppp/base_unida_15s.obs \
+  -smp 15</code></pre>
+<p>También puedes realizar el diezmado con <code>convbin</code> leyendo el RINEX y usando <code>-ti 15</code>. Por ejemplo:</p>
+<pre class="bash"><code>convbin -r rinex -v 3.04 -ti 15 \
+  -o ppp/base_unida_15s_convbin.obs \
+  ppp/base_unida_01s.obs</code></pre>
+<p>No es obligatorio aplicar <strong>ambos</strong> procedimientos. Elige uno, pero debes demostrar de manera reproducible que el archivo enviado tiene una cadencia de 15 s.</p>
+<div id="comprobaciones-reproducibles" class="section level3">
+<h3>Comprobaciones reproducibles</h3>
+<p>Incluye comandos que permitan demostrar, como mínimo:</p>
+<ol>
+<li>cuántos archivos horarios recibiste;</li>
+<li>que fueron unidos;</li>
+<li>fecha/hora de primera y última observación;</li>
+<li>que el RINEX final tiene intervalo de 15 s;</li>
+<li>tamaño y nombre del archivo finalmente enviado.</li>
+</ol>
+<p>Puedes complementar <code>gfzrnx</code> con comandos del sistema (<code>ls</code>, <code>wc</code>, <code>grep</code>, etc.) y mostrar sus salidas en el cuaderno.</p>
+</div>
+</div>
+<div id="obtén-una-solución-independiente-para-la-coordenada-de-la-base" class="section level2">
+<h2>Obtén una solución independiente para la coordenada de la base</h2>
+<p><strong>Cada estudiante deberá enviar personalmente su RINEX de 15 s a uno de estos servicios y conservar el informe de salida:</strong></p>
 <ul>
-<li>Si algún día necesitaras hacer RTK, la base transmite en rtk2go.com. Estos son los detalles:
+<li>CSRS-PPP, Natural Resources Canada (NRCan);</li>
+<li>OPUS, National Geodetic Survey (NGS/NOAA);</li>
+<li>AUSPOS, Geoscience Australia.</li>
+</ul>
+<p>El servicio elegido puede imponer requisitos particulares de duración, constelaciones, tipo de antena o formato. Debes revisar dichos requisitos antes del envío.</p>
+<p>Registra en el informe:</p>
 <ul>
-<li>Usuario: pon una dirección de correo válida y a la que puedas acceder</li>
-<li>Password: no requiere</li>
-<li>URL: rtk2go.com</li>
-<li>Puerto: 2101</li>
-<li>Punto de montaje: <code>geofis_ovni</code></li>
-</ul></li>
-<li>Si visitas esta ruta, podrás ver la coordenada en distintos formatos: <a href="http://rtk2go.com:2101/SNIP::MOUNTPT?NAME=geofis_ovni">http://rtk2go.com:2101/SNIP::MOUNTPT?NAME=geofis_ovni</a>.</li>
-<li>Esta base se encuentra en el Distrito Nacional de Santo Domingo, y ha estado transmitiendo mensajes RTCM desde 2021. La coordenada de la base transmitida a partir de 08/11/2021 (desde aprox 11.02 am hora local SD, de ese día) es la siguiente: <strong>18.4682098638889 -69.9101351555556 10.764</strong> (ver otros formatos abajo).</li>
-<li>Esta coordenada fue generada como una solución PPP usando 7 días de observaciones brutas mediante el Sistema Canadiense de Referencia Espacial Posicionamiento Puntual Preciso (<em>Canadian Spatial Reference System Precise Point Positioning</em>, CSRS-PPP) de <em>Natural Resources Canada</em> (NRCAN) (en lo adelante “CSRS-PPP-NRCAN”) EN MODO FINAL (efemérides precisas) (investiga que es CSRS-PPP de NRCAN).</li>
-<li>Dejo a continuación los detalles de la solución obtenida, contenida en el archivo “observations.sum”:
+<li>servicio utilizado;</li>
+<li>archivo RINEX enviado;</li>
+<li>intervalo de observación;</li>
+<li>duración total;</li>
+<li>modo de procesamiento;</li>
+<li>marco de referencia de la solución;</li>
+<li><strong>época de la coordenada</strong>;</li>
+<li>coordenadas LLH y/o XYZ;</li>
+<li>incertidumbres reportadas;</li>
+<li>tratamiento de la antena y de la altura instrumental;</li>
+<li>advertencias emitidas por el servicio.</li>
+</ul>
+<blockquote>
+<p><strong>No uses una coordenada PPP facilitada por otra persona.</strong> El objetivo es que cada estudiante complete y documente todo el flujo desde los archivos horarios hasta una solución PPP propia.</p>
+</blockquote>
+</div>
+<div id="marco-de-referencia-no-transformes-la-solución-a-wgs84-transit" class="section level2">
+<h2>Marco de referencia: no transformes la solución a WGS84 (Transit)</h2>
+<p>En versiones anteriores de esta práctica se pedía transformar la coordenada ITRF obtenida mediante PPP a <strong>WGS84 original (Transit)</strong> usando HTDP. <strong>No hagas esa transformación.</strong></p>
+<p>Una solución PPP moderna puede estar expresada, por ejemplo, en <strong>ITRF2020/IGS20 a la época de las observaciones</strong>. ITRF es un marco dinámico: no basta con conocer el nombre del marco, también importa la época de la coordenada.</p>
+<p>RTKLIB-EX utiliza coordenadas cartesianas/geodésicas y los marcos implícitos en las órbitas empleadas, pero no necesita que una coordenada PPP moderna y coherente con la época de observación sea artificialmente transformada al WGS84 original (Transit). En esta práctica:</p>
 <ul>
-<li>Referencia: ITRF14 (2021.8)</li>
-<li>Errores: Sigmas(95%): Latitude=0.0007 m, Longitude=0.0008 m, Ell. Height=0.0030 m</li>
-<li>Coordenada provista por CSRS-PPP-NRCAN en Latitude, Longitude, Ell. Height: 18° 28’ 5.55551”, -69° 54’ 36.48656”, 10.7640 m</li>
-<li>Coordenada provista por CSRS-PPP-NRCAN en XYZ (m): 2078721.2081, -5683487.6649, 2007608.4186</li>
-</ul></li>
-<li>IMPORTANTE: ¡¡¡¡¡NO USAR ESTA COORDENADA PARA POSPROCESAR EN RTKLIB, PUES RTKLIB LA NECESITA EN WGS84. PARTE DE LA PRÁCTICA CONSISTE EN APRENDER A TRANSFORMAR ESTA COORDENADA A WGS84!!!!!</li>
+<li>la coordenada PPP de la base debe corresponder a la época de las observaciones;</li>
+<li>base y rover se observaron en la misma campaña;</li>
+<li>para PPK con efemérides transmitidas (<em>broadcast</em>) se utilizará directamente la coordenada PPP moderna de la base;</li>
+<li>si posteriormente se usan productos precisos SP3/CLK modernos, éstos se encuentran alineados con realizaciones IGS/ITRF modernas, lo que refuerza la necesidad de <strong>conservar y documentar el marco y la época</strong>, no de convertir a WGS84 Transit.</li>
+</ul>
+<p>Por tanto, en tu informe escribe explícitamente algo como:</p>
+<blockquote>
+<p><em>La coordenada de la base se obtuvo mediante PPP en [marco] a la época [época]. Se utilizó directamente como coordenada fija de la base en el PPK; no se realizó una transformación a WGS84 (Transit).</em></p>
+</blockquote>
+</div>
+</div>
+<div id="ejercicio-3.-genera-soluciones-fijas-ppk-y-evalúa-el-resultado" class="section level1">
+<h1>Ejercicio 3. Genera soluciones fijas PPK y evalúa el resultado</h1>
+<div id="prepara-la-configuración-reproducible-de-rtklib-ex" class="section level2">
+<h2>Prepara la configuración reproducible de RTKLIB-EX</h2>
+<p>Puedes explorar la configuración mediante RTKPOST, pero el procesamiento final debe poder repetirse con <code>rnx2rtkp</code>.</p>
+<p>Una forma cómoda de trabajar consiste en configurar RTKPOST, guardar la configuración y reutilizar ese archivo con <code>rnx2rtkp</code>. Conserva el archivo de configuración en tu repositorio, por ejemplo:</p>
+<pre class="text"><code>scripts/ppk.conf</code></pre>
+<p>Documenta, como mínimo:</p>
+<ul>
+<li>modo de posicionamiento;</li>
+<li>frecuencias utilizadas;</li>
+<li>constelaciones;</li>
+<li>máscara de elevación;</li>
+<li>estrategia de resolución de ambigüedades;</li>
+<li>modelo ionosférico y troposférico;</li>
+<li>efemérides empleadas (<code>broadcast</code> o precisas, si posteriormente repites el ejercicio);</li>
+<li>coordenada fija de la base, con marco y época;</li>
+<li>información de antena;</li>
+<li>altura ARP–marca o corrección aplicada;</li>
+<li>formato de salida.</li>
 </ul>
 </div>
-<div id="base-unicore" class="section level3">
-<h3>Base Unicore</h3>
-<p>La “base Unicore” usa un módulo UM980 (archivo extensión <code>.log</code> en la carpeta “bases”). Estos son los detalles de la solución obtenida:</p>
+<div id="antena-arp-pcoapc-y-jalón" class="section level2">
+<h2>Antena, ARP, PCO/APC y jalón</h2>
+<p>La altura del jalón <strong>no debe tratarse como una corrección genérica de 2 m</strong>. Usa la altura que se te proporcione para esta campaña y deja claro entre qué puntos fue medida.</p>
+<p>Para el rover, la observación GNSS está físicamente relacionada con el centro de fase de la antena, mientras que el punto que normalmente interesa levantar está en la base del jalón. RTKLIB puede aplicar correcciones de antena cuando dispone de la información apropiada. Te facilitaré el modelo de antena y/o los parámetros necesarios.</p>
+<p>En el informe distingue:</p>
 <ul>
-<li>Si algún día necesitaras hacer RTK, la base transmite en rtk2go.com. Estos son los detalles:
-<ul>
-<li>Usuario: pon una dirección de correo válida y a la que puedas acceder</li>
-<li>Password: no requiere</li>
-<li>URL: rtk2go.com</li>
-<li>Puerto: 2101</li>
-<li>Punto de montaje: <code>geofis_mbase</code></li>
-</ul></li>
-<li>Si visitas esta ruta, podrás ver la coordenada en distintos formatos: <a href="http://rtk2go.com:2101/SNIP::MOUNTPT?NAME=geofis_mbase">http://rtk2go.com:2101/SNIP::MOUNTPT?NAME=geofis_mbase</a>.</li>
-<li>Esta base se encuentra en el Distrito Nacional de Santo Domingo, y ha estado transmitiendo mensajes RTCM desde finales de 2024. La coordenada de la base transmitida a partir de 19/11/2024 es la siguiente: <strong>18.45964924° -69.91668732° -11.582</strong> (ver otros formatos abajo).</li>
-<li>Esta coordenada fue generada como una solución PPP usando 2 días de observaciones brutas mediante el Sistema Canadiense de Referencia Espacial Posicionamiento Puntual Preciso (<em>Canadian Spatial Reference System Precise Point Positioning</em>, CSRS-PPP) de <em>Natural Resources Canada</em> (NRCAN) (en lo adelante “CSRS-PPP-NRCAN”) EN MODO Ultra-Rapid (efemérides no precisas) (investiga los tipos de soluciones de CSRS-PPP-NRCAN).</li>
-<li>Dejo a continuación los detalles de la solución obtenida, contenida en el archivo “SALIDA.24O”:
-<ul>
-<li>Referencia: ITRF20 (2024.9)</li>
-<li>Errores: Sigmas(95%): Latitude=0.002 m, Longitude=0.002 m, Ell. Height=0.006 m</li>
-<li>Coordenada provista por CSRS-PPP-NRCAN en Latitude, Longitude, Ell. Height: 18° 27’ 34.73725” -69° 55’ 0.07435”, -11.582 m</li>
-<li>Coordenada provista por CSRS-PPP-NRCAN en XYZ (m): 2078167.0183, -5683987.2824, 2006702.5783</li>
-</ul></li>
-<li>IMPORTANTE: ¡¡¡¡¡NO USAR ESTA COORDENADA PARA POSPROCESAR EN RTKLIB, PUES RTKLIB LA NECESITA EN WGS84. PARTE DE LA PRÁCTICA CONSISTE EN APRENDER A TRANSFORMAR ESTA COORDENADA A WGS84!!!!!</li>
+<li>punto del terreno o marca;</li>
+<li>ARP;</li>
+<li>altura ARP–marca;</li>
+<li>PCO/PCV cuando se suministren;</li>
+<li>punto al cual corresponde la coordenada final reportada.</li>
 </ul>
 </div>
-</div>
-<div id="transforma" class="section level2">
-<h2>Transforma</h2>
+<div id="genera-las-soluciones" class="section level2">
+<h2>Genera las soluciones</h2>
+<p>Tienes dos rovers observados aproximadamente durante 120 s en el mismo punto:</p>
+<ol>
+<li>rover <strong>u-blox</strong>;</li>
+<li>rover <strong>Unicore</strong>.</li>
+</ol>
+<p>Ambos se procesarán respecto de <strong>la misma base cuya coordenada obtuviste personalmente mediante PPP</strong>.</p>
+<p>Un comando reproducible tendrá esta estructura general:</p>
+<pre class="bash"><code>rnx2rtkp -k scripts/ppk.conf \
+  -o ppk/rover_ublox.pos \
+  rinex/rover/rover_ublox.obs \
+  rinex/base/base_correspondiente.obs \
+  rinex/base/base.nav</code></pre>
+<p>y para Unicore:</p>
+<pre class="bash"><code>rnx2rtkp -k scripts/ppk.conf \
+  -o ppk/rover_unicore.pos \
+  rinex/rover/rover_unicore.obs \
+  rinex/base/base_correspondiente.obs \
+  rinex/base/base.nav</code></pre>
+<p>Adapta los nombres y los archivos de navegación a los que realmente generaste. Si las observaciones cruzan un cambio de día, asegúrate de incluir todos los archivos de navegación necesarios.</p>
+<p><strong>Para cada rover realiza dos salidas:</strong></p>
 <ul>
-<li>Usa el servicio de Posicionamiento Horizontal Dependiente de la Fecha (Horizontal Time-Dependent Positioning, HTDP) del Servicio Geodésico Nacional de Estados Unidos (NGS, NOAA) para convertir la coordenada de la base a WGS84. El servicio tiene como página principal esta: <a href="https://geodesy.noaa.gov/TOOLS/Htdp/Htdp.shtml">https://geodesy.noaa.gov/TOOLS/Htdp/Htdp.shtml</a>. Allí, presiona el enlace <a href="https://geodesy.noaa.gov/TOOLS/Htdp/Htdp_transform.shtml">“Transform positions between reference frames and/or dates. (Note)”</a>, y luego en <a href="https://geodesy.noaa.gov/cgi-bin/HTDP/htdp.prl?f1=4&amp;f2=1">Individual points entered interactively</a>. Configura los campos de acuerdo con las indicaciones de la página. Recuerda que vas a transformar desde un “ITRF” (14 o 20) a “WGS84 original (Transit)”.</li>
+<li>una solución que te permita obtener/resumir la posición fija del punto;</li>
+<li>una salida época por época para estudiar dispersión, estado FIX/FLOAT y estabilidad.</li>
 </ul>
-<p>Conserva dicha coordenada, pues es la que deberás usar en RTKLib-Ex para generar las soluciones fijas por posproceso.</p>
-</div>
-</div>
-<div id="ejercicio-3.-genera-soluciones-fijas-evalúa-el-resultado" class="section level1">
-<h1>Ejercicio 3. Genera soluciones fijas, evalúa el resultado</h1>
-<div id="genera-soluciones-fijas" class="section level2">
-<h2>Genera soluciones fijas</h2>
-<p>Usa RTKLib-Ex para hacer posproceso. Si tienes otro software, mientras sea de código abierto, úsalo; de lo contrario, si es de código privativo, úsalo sólo para tus propios fines, pero no lo uses para reportar tus resultados en la práctica.</p>
-<p>En RTKLib-Ex puedes usar la herramienta RTKPOST (interfaz gráfica) o rnx2rtkp (línea de comandos). Necesitarás las coordenadas de las bases <strong>en WGS84</strong> para esto. Para facilitar las cosas, obtén las soluciones respecto del punto de referencia de la antena (Antenna Reference Point, ARP), por lo que tendrás que restar los 2 metros de jalón. Esto se lo debes indicar a RTKPOST (o a rnx2rtkp si usas línea comandos) en el argumento “Delta-E/N/U (m)”.</p>
-<p>Deberás generar cuatro soluciones. Dado que tienes dos colectas de rover (u-blox y Unicore) y dos bases (u-blox y Unicore), deberás generar las siguientes soluciones:</p>
-<ul>
-<li>Rover u-blox corregido con base u-blox</li>
-<li>Rover Unicore corregido con base u-blox</li>
-<li>Rover u-blox corregido con base Unicore</li>
-<li>Rover Unicore corregido con base Unicore</li>
-</ul>
-<p><strong>En cada caso deberás realizar dos procesamientos, por lo que te saldrán dos archivos por cada solución: uno para obtener la solución fija promediada, y otro para obtener las soluciones de cada época (“época por época”, <em>epoch-by-epoch</em>). En total, generarás 8 archivos</strong>.</p>
+<p>En total tendrás, como mínimo, <strong>cuatro productos de solución</strong>: dos correspondientes al rover u-blox y dos al rover Unicore.</p>
+<blockquote>
+<p>No basta con presentar archivos <code>.pos</code>. Debes incluir el script o los comandos que permitan regenerarlos a partir de los RINEX y del archivo de configuración.</p>
+</blockquote>
 </div>
 <div id="representa-tabular-y-cartográficamente-compara" class="section level2">
 <h2>Representa tabular y cartográficamente, compara</h2>
 <div id="representación-tabular" class="section level3">
 <h3>Representación tabular</h3>
-<p>Muestra los resultados de tus soluciones promediadas en una tabla como ésta:</p>
-<div class="vlines" style="max-width: 560px;">
+<p>Muestra los resultados de las soluciones promediadas en una tabla como ésta:</p>
+<div class="vlines" style="max-width: 700px;">
 <table>
 <thead>
 <tr class="header">
 <th>Rover</th>
-<th>Base</th>
+<th>Receptor</th>
 <th>Resultado (LLH o XYZ)</th>
+<th>% FIX</th>
 <th>Observaciones</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td>u-blox</td>
-<td>u-blox</td>
+<td>doble frecuencia</td>
 <td></td>
-<td></td>
-</tr>
-<tr class="even">
-<td>Unicore</td>
-<td>u-blox</td>
-<td></td>
-<td></td>
-</tr>
-<tr class="odd">
-<td>u-blox</td>
-<td>Unicore</td>
 <td></td>
 <td></td>
 </tr>
 <tr class="even">
 <td>Unicore</td>
-<td>Unicore</td>
+<td>triple frecuencia</td>
+<td></td>
 <td></td>
 <td></td>
 </tr>
@@ -654,80 +788,64 @@ display: none;
 </table>
 </div>
 <p><br></p>
-<p>O si lo prefieres, en una tabla como ésta (en cada celda, colocarías tus soluciones promediadas en formato LLH o XYZ):</p>
-<div class="vlines" style="max-width: 560px;">
-<table>
-<thead>
-<tr class="header">
-<th align="center">Rover \ Base</th>
-<th>u-blox</th>
-<th>Unicore</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="center"><strong>u-blox</strong></td>
-<td></td>
-<td></td>
-</tr>
-<tr class="even">
-<td align="center"><strong>Unicore</strong></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-</div>
-<p>Para gráficar las soluciones, ve a tu cuenta en el servidor RStudio, sube tus archivos de soluciones <code>.pos</code>, carga la función personalizada <code>pos_read_violin</code> usando el comando siguiente …</p>
+<p>Incluye también la coordenada PPP utilizada para la base, indicando <strong>marco y época</strong>, pero no la mezcles con las coordenadas rover como si todas fueran observaciones equivalentes.</p>
+<p>Para graficar las soluciones, ve a tu cuenta en el servidor RStudio, sube tus archivos de soluciones <code>.pos</code>, carga la función personalizada <code>pos_read_violin</code> usando el comando siguiente:</p>
 <pre class="r"><code>devtools::source_url(
 paste0(&#39;https://raw.githubusercontent.com/geomorfologia-master/&#39;,
        &#39;datos-gnss-soluciones-fijas/refs/heads/main/R/funciones.R&#39;))</code></pre>
-<p>… y evalúa dicha función con este comando …</p>
+<p>Evalúa la función:</p>
 <pre class="r"><code>archivos_pos &lt;- list.files(pattern = &#39;*.pos&#39;)
 res &lt;- pos_read_violin(archivos_pos, q_filter=1, export=&#39;gpkg&#39;,
                        export_path = &quot;ppk_fix.gpkg&quot;,
                        export_layer = &quot;ppk_fix&quot;,
                        plot_stat = &quot;raw&quot;, stat_by = &quot;archivo&quot;)</code></pre>
-<p>… y finalmente imprime el resultado en consola con esto …</p>
+<p>e imprime el resultado:</p>
 <pre class="r"><code>res</code></pre>
-<p>… lo cual imprimirá un extracto de la tabla y un gráfico de violín. Si notas mucha dispersión, o si quieres ver cuál de las soluciones presenta mayor dispersión respecto de la media, podrías correr esto:</p>
+<p>Si notas mucha dispersión, o quieres comparar la dispersión respecto de la media:</p>
 <pre class="r"><code>res &lt;- pos_read_violin(archivos_pos, q_filter=1, export=&#39;gpkg&#39;,
                        export_path = &quot;ppk_fix.gpkg&quot;,
                        export_layer = &quot;ppk_fix&quot;,
                        plot_stat = &quot;z&quot;, stat_by = &quot;archivo&quot;)
 res</code></pre>
-<p>El argumento <code>export=&#39;gpkg&#39;</code> genera un archivo GeoPackage (ppk_fix.gpkg) que puedes descargar y abrir en QGIS para representar cartográficamente las soluciones. El argumento <code>export_layer</code> permite definir el nombre de la capa dentro del GeoPackage.</p>
+<p>El argumento <code>export=&#39;gpkg&#39;</code> genera un archivo GeoPackage (<code>ppk_fix.gpkg</code>) que puedes descargar y abrir en QGIS. El argumento <code>export_layer</code> permite definir el nombre de la capa.</p>
 </div>
 <div id="compara-los-resultados" class="section level3">
 <h3>Compara los resultados</h3>
-<p>Compara los resultados obtenidos. Dado que obtendrás las soluciones época por época, con la prueba t de Student no emparejada, compara los siguientes pares de muestras en cada una de las componentes de coordenadas (X, Y, Z o Lat, Lon, H) para un nivel de significancia de 0.05:</p>
+<p>Compara las soluciones época por época de los dos receptores. Como ambos levantaron el mismo punto, interesa cuantificar:</p>
 <ul>
-<li>Misma base, distintos rovers:
-<ul>
-<li>Rover u-blox corregido con base u-blox vs rover Unicore corregido con base u-blox</li>
-<li>Rover u-blox corregido con base Unicore vs rover Unicore corregido con base Unicore</li>
-</ul></li>
-<li>Mismo rover, distintas bases:
-<ul>
-<li>Rover u-blox corregido con base u-blox vs rover u-blox corregido con base Unicore</li>
-<li>Rover Unicore corregido con base u-blox vs rover Unicore corregido con base Unicore</li>
-</ul></li>
+<li>diferencia entre las coordenadas promediadas;</li>
+<li>dispersión de cada solución;</li>
+<li>porcentaje de épocas FIX;</li>
+<li>presencia de FLOAT, SINGLE, outliers o interrupciones;</li>
+<li>diferencias horizontales y verticales;</li>
+<li>posible efecto de utilizar receptor doble frecuencia frente a triple frecuencia.</li>
 </ul>
-<div id="u-blox-con-base-u-blox-vs-unicore-con-base-u-blox" class="section level4">
-<h4>u-blox con base u-blox vs Unicore con base u-blox</h4>
-<div class="vlines" style="max-width: 600px;">
-<table>
+<p>Si las dos colectas <strong>no son temporalmente coincidentes</strong>, no las trates como muestras emparejadas. Puedes usar una prueba t de Student no emparejada por componente, siempre que discutas sus supuestos y limitaciones. Si el objetivo principal es comparar precisión/estabilidad, acompaña cualquier prueba inferencial con medidas descriptivas de dispersión y diferencias en metros.</p>
+<div class="vlines" style="max-width: 650px;">
+<table style="width:100%;">
+<colgroup>
+<col width="16%" />
+<col width="19%" />
+<col width="20%" />
+<col width="16%" />
+<col width="4%" />
+<col width="22%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th>Componente</th>
-<th>Media de las diferencias</th>
+<th>Media u-blox</th>
+<th>Media Unicore</th>
+<th>Diferencia</th>
 <th>p</th>
-<th>Sign. o no sign.</th>
+<th>Interpretación</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td>Lat / X</td>
+<td></td>
+<td></td>
 <td></td>
 <td></td>
 <td></td>
@@ -737,39 +855,6 @@ res</code></pre>
 <td></td>
 <td></td>
 <td></td>
-</tr>
-<tr class="odd">
-<td>H / Z</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div id="u-blox-con-base-unicore-vs-unicore-con-base-unicore" class="section level4">
-<h4>u-blox con base Unicore vs Unicore con base Unicore</h4>
-<div class="vlines" style="max-width: 600px;">
-<table>
-<thead>
-<tr class="header">
-<th>Componente</th>
-<th>Media de las diferencias</th>
-<th>p</th>
-<th>Sign. o no sign.</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Lat / X</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr class="even">
-<td>Lon / Y</td>
-<td></td>
 <td></td>
 <td></td>
 </tr>
@@ -778,160 +863,87 @@ res</code></pre>
 <td></td>
 <td></td>
 <td></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div id="u-blox-con-base-u-blox-vs-u-blox-con-base-unicore" class="section level4">
-<h4>u-blox con base u-blox vs u-blox con base Unicore</h4>
-<div class="vlines" style="max-width: 600px;">
-<table>
-<thead>
-<tr class="header">
-<th>Componente</th>
-<th>Media de las diferencias</th>
-<th>p</th>
-<th>Sign. o no sign.</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Lat / X</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr class="even">
-<td>Lon / Y</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr class="odd">
-<td>H / Z</td>
-<td></td>
 <td></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-</div>
-</div>
-<div id="unicore-con-base-u-blox-vs-unicore-con-base-unicore" class="section level4">
-<h4>Unicore con base u-blox vs Unicore con base Unicore</h4>
-<div class="vlines" style="max-width: 600px;">
-<table>
-<thead>
-<tr class="header">
-<th>Componente</th>
-<th>Media de las diferencias</th>
-<th>p</th>
-<th>Sign. o no sign.</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Lat / X</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr class="even">
-<td>Lon / Y</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr class="odd">
-<td>H / Z</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-</div>
 </div>
 </div>
 <div id="representación-cartográfica" class="section level3">
 <h3>Representación cartográfica</h3>
-<p>Representa tus soluciones promediadas o época por época en RTKPLOT, el cual te permite mostrar dos archivos de soluciones a la vez. Si lo haces con QGIS, asigna simbología que permita distinguir qué soluciones estás mostrando.</p>
+<p>Representa las soluciones promediadas y/o época por época en RTKPLOT o QGIS. La simbología debe permitir distinguir claramente las soluciones del rover u-blox y del rover Unicore.</p>
+<p>Cuando la separación sea muy pequeña para apreciarse a escala cartográfica, complementa el mapa con gráficos en coordenadas locales E/N/U o con distancias respecto de una posición de referencia.</p>
 </div>
 </div>
 </div>
 <div id="redacta-un-informe-integrado-imrad-abreviado" class="section level1">
 <h1>Redacta un informe integrado (IMRaD abreviado)</h1>
-<p>Prepara un <strong>informe breve con estructura IMRaD</strong> (Introducción, Métodos, Resultados, Discusión), <strong>usando IA como apoyo si lo deseas</strong> (para bosquejar texto, tablas o figuras). <strong>Todo debe ser conciso</strong>: <strong>cada sección debe tener entre 3 y 4 párrafos cortos</strong>. Añade <strong>lista de referencias</strong> al final y <strong>citas en el texto</strong> (mínimo <strong>3</strong> fuentes).</p>
+<p>Prepara un <strong>informe breve con estructura IMRaD</strong> (Introducción, Métodos, Resultados, Discusión), <strong>usando IA como apoyo si lo deseas</strong>. Todo debe ser conciso: <strong>cada sección debe tener entre 3 y 4 párrafos cortos</strong>. Añade lista de referencias al final y citas en el texto (mínimo <strong>3</strong> fuentes).</p>
 <blockquote>
-<p><strong>Uso de IA</strong>: puedes apoyarte en herramientas de IA para redactar, resumir o formatear, pero <strong>debes verificar</strong> los contenidos, números y citas; <strong>no</strong> entregues texto sin revisar. Añade al final una breve nota: <em>“Se utilizó IA para apoyo en redacción/edición/formato; verificación humana realizada.”</em></p>
+<p><strong>Uso de IA</strong>: puedes apoyarte en herramientas de IA para redactar, resumir, programar o formatear, pero debes verificar contenidos, números, comandos y citas. Añade al final una breve nota explicando para qué utilizaste IA y qué verificaciones realizaste.</p>
 </blockquote>
 <hr />
 <div id="introducción-34-párrafos" class="section level2">
 <h2>1) Introducción (3–4 párrafos)</h2>
 <ul>
-<li><strong>Contexto y relevancia</strong>: sitúa el problema (posicionamiento GNSS, necesidad de soluciones fijas/PPK/RTK) y por qué importa en geomorfología.</li>
-<li><strong>Estado breve del arte</strong>: menciona 1–2 ideas clave de la literatura (p. ej., PPP vs. RTK, calidad de observaciones, conversión a WGS84), <strong>con citas en el texto</strong>.</li>
-<li><strong>Objetivo(s) y pregunta(s)</strong>: formula con precisión qué comparas (p. ej., “cuatro combinaciones rover–base”) y qué esperas observar.</li>
-<li><strong>Hipótesis (opcional, breve)</strong>: qué combinación esperas que tenga menor dispersión y por qué.</li>
+<li><strong>Contexto y relevancia</strong>: posicionamiento GNSS, PPP, PPK/RTK y aplicaciones en geomorfología.</li>
+<li><strong>Estado breve del arte</strong>: diferencia entre PPP y posicionamiento relativo; observables de fase; importancia de RINEX, marco de referencia y época.</li>
+<li><strong>Objetivo(s) y pregunta(s)</strong>: compara las soluciones obtenidas con rover u-blox y rover Unicore en el mismo punto.</li>
+<li><strong>Hipótesis (opcional)</strong>: plantea si esperas diferencias de dispersión o porcentaje FIX entre receptor doble y triple frecuencia y justifica por qué.</li>
 </ul>
 </div>
 <div id="métodos-34-párrafos" class="section level2">
 <h2>2) Métodos (3–4 párrafos)</h2>
 <ul>
-<li><strong>Datos y equipos</strong>: resume rovers/bases, formatos (UBX/LOG → RINEX 3.04), ventanas temporales, y criterio de calidad (p. ej., filtro <strong>Q=1</strong> FIX).</li>
-<li><strong>Procesamiento</strong>: software (RTKLIB-EX/RTKPOST o rnx2rtkp), parámetros esenciales (máscara de elevación, constelaciones, modelo troposférico, ARP/altura de jalón, “Delta E/N/U”), y <strong>conversión de coordenadas</strong> de ITRF → <strong>WGS84</strong> (HTDP/NGS).</li>
-<li><strong>Salidas</strong>: especifica que generaste <strong>solución promediada</strong> y <strong>época por época</strong> para cada combinación (4 pares rover–base → 8 archivos).</li>
-<li><strong>Estadística</strong>: cómo resumiste (medias/dispersiones), cómo normalizaste (opcional: <strong>z-score</strong> o <strong>|x−μ|</strong>), y <strong>prueba t no emparejada</strong> por componente (Lat/X, Lon/Y, H/Z; α=0.05).</li>
+<li><strong>Datos y equipos</strong>: describe los dos rovers, la base, duración aproximada de 120 s de las ocupaciones rover, archivos crudos y conversión a RINEX 3.04.</li>
+<li><strong>Preparación de la base y PPP</strong>: explica cómo uniste los archivos horarios con <code>gfzrnx</code>, cómo redujiste la cadencia a 15 s y qué servicio utilizaste para obtener personalmente la coordenada de la base.</li>
+<li><strong>Marco y antena</strong>: reporta marco y época de la coordenada PPP; explica que no se transformó a WGS84 (Transit); documenta ARP, altura del jalón y parámetros de antena suministrados.</li>
+<li><strong>PPK reproducible</strong>: RTKLIB-EX, <code>rnx2rtkp</code>, archivo de configuración, parámetros esenciales, efemérides, salidas y criterio Q=1/FIX.</li>
 </ul>
 </div>
 <div id="resultados-34-párrafos" class="section level2">
 <h2>3) Resultados (3–4 párrafos)</h2>
 <ul>
-<li><p><strong>Tabla(s) y figura(s) numeradas</strong>: incluye al menos <strong>una tabla</strong> de promedios por combinación y <strong>una o dos figuras</strong> (p. ej., <strong>gráficos de violín</strong> de E/N/H; <strong>mapa</strong> opcional).</p>
-<ul>
-<li><strong>Cita en el texto</strong>: <em>“…(ver <strong>Fig. 1</strong> y <strong>Tabla 1</strong>)”</em>.</li>
-<li><strong>Leyendas completas</strong> bajo cada figura/tabla: <em>“<strong>Figura 1.</strong> Distribución E/N/H por combinación…”</em> / <em>“<strong>Tabla 1.</strong> Medias y dispersión…”</em>.</li>
-</ul></li>
-<li><p><strong>Hallazgos principales</strong>: reporta tendencias concisas (p. ej., menor varianza en Unicore@Unicore; sesgo vertical en u-blox@u-blox).</p></li>
-<li><p><strong>Pruebas de hipótesis</strong>: resume <strong>p-valores</strong> por componente y la <strong>significancia</strong> (p&lt;0.05), referenciando una tabla de contraste (<em>ver <strong>Tabla 2</strong></em>).</p></li>
-<li><p><strong>Calidad y anomalías</strong>: menciona FIX/float, outliers y cualquier incidencia (saltos de ciclo, pérdida de solución).</p></li>
+<li><strong>Tabla(s) y figura(s) numeradas</strong>: incluye al menos una tabla de coordenadas/resúmenes y una o dos figuras.</li>
+<li><strong>PPP de la base</strong>: informa coordenada, marco, época e incertidumbre obtenidos por tu propio envío.</li>
+<li><strong>PPK</strong>: reporta coordenadas de ambos rovers, porcentaje FIX, dispersión y diferencias entre soluciones.</li>
+<li><strong>Calidad y anomalías</strong>: documenta <em>cycle slips</em>, interrupciones, advertencias de conversión/PPP, FLOAT, outliers u otras incidencias.</li>
 </ul>
 </div>
 <div id="discusión-34-párrafos" class="section level2">
 <h2>4) Discusión (3–4 párrafos)</h2>
 <ul>
-<li><strong>Interpretación</strong>: explica por qué ciertas combinaciones rinden mejor (geometría satelital, multipath, configuración, base–rover).</li>
-<li><strong>Comparación con literatura</strong>: relaciona tus resultados con <strong>al menos 2–3</strong> trabajos/fuentes citados.</li>
-<li><strong>Limitaciones</strong>: ventana temporal, entorno, parámetros de RTKLIB, supuestos (WGS84, modelos).</li>
-<li><strong>Implicaciones y trabajo futuro</strong>: cómo mejorar (más datos, PPP final, máscaras, antenas, filtros), y aplicabilidad en geomorfología.</li>
+<li><strong>Interpretación</strong>: explica las diferencias entre los dos receptores y separa precisión relativa, exactitud absoluta y dispersión.</li>
+<li><strong>Marco de referencia</strong>: discute por qué conservar el ITRF/IGS moderno y su época es preferible a transformar innecesariamente la solución a WGS84 (Transit).</li>
+<li><strong>Limitaciones</strong>: ocupaciones rover de sólo ~120 s, multipath del campus, geometría satelital, configuración de RTKLIB-EX, calidad de la coordenada PPP y tratamiento de antena.</li>
+<li><strong>Implicaciones y trabajo futuro</strong>: sesiones más largas, productos SP3/CLK Rapid/Final, repetición en distintos entornos, comparación entre efemérides broadcast y precisas.</li>
 </ul>
 </div>
 <div id="referencias" class="section level2">
 <h2>Referencias</h2>
 <ul>
-<li><p>Incluye <strong>mínimo 3</strong> fuentes y <strong>cítalas en el texto</strong> (elige un estilo y sé consistente: <strong>autor–año</strong> o <strong>numérico</strong>).</p></li>
-<li><p>Sugerencias típicas (elige las reales que uses):</p>
+<li>Incluye <strong>mínimo 3</strong> fuentes y cítalas en el texto.</li>
+<li>Sugerencias:
 <ul>
-<li>Documentación <strong>RTKLIB-EX</strong> / manual de usuario.</li>
-<li><strong>NGS/NOAA HTDP</strong> (conversión o marcos de referencia).</li>
-<li>Artículos/revisiones sobre <strong>PPP/RTK/PPK</strong>, calidad de observaciones GNSS, tratamiento de <strong>RINEX</strong>.</li>
-</ul></li>
-<li><p>Formato de ejemplo (autor–año):</p>
-<ul>
-<li><em>Autor, A. (2023).</em> Título del recurso. Editorial/Revista. DOI/URL.</li>
-<li><em>Autor, B. &amp; Autor, C. (2021).</em> Título… DOI/URL.</li>
-<li><em>Organismo (2024).</em> Título… URL.</li>
+<li>documentación de <strong>RTKLIB-EX/RTKLIB</strong>;</li>
+<li>documentación del servicio PPP utilizado (NRCan/CSRS-PPP, OPUS o AUSPOS);</li>
+<li>documentación de <strong>GFZRNX</strong>;</li>
+<li>especificación <strong>RINEX</strong>;</li>
+<li>literatura científica sobre PPP, RTK/PPK, resolución de ambigüedades y marcos ITRF/IGS.</li>
 </ul></li>
 </ul>
 <hr />
 <div id="requisitos-de-forma" class="section level3">
 <h3>Requisitos de forma</h3>
 <ul>
-<li><strong>Extensión breve</strong>: 4 secciones × <strong>3–4 párrafos</strong> cada una (frases compactas; evita relleno).</li>
-<li><strong>Numeración de figuras y tablas</strong> (Fig. 1, Fig. 2…; Tabla 1, 2…), <strong>mención en el texto</strong> y <strong>leyenda clara</strong>.</li>
-<li><strong>Transparencia</strong>: nota de <strong>uso de IA</strong> (si aplicó) y <strong>repositorio/archivos</strong> usados (ruta o enlace).</li>
-<li><strong>Entregable</strong>: PDF/HTML; incluye tablas/figuras incrustadas y <strong>lista de referencias</strong>.</li>
+<li><strong>Extensión breve</strong>: 4 secciones × <strong>3–4 párrafos</strong> cada una.</li>
+<li><strong>Reproducibilidad obligatoria</strong>: incluye los comandos/scripts utilizados para conversión, unión, diezmado y PPK.</li>
+<li><strong>Trazabilidad PPP</strong>: adjunta o conserva el informe del servicio y registra marco, época e incertidumbres.</li>
+<li><strong>Antena</strong>: documenta ARP, altura ARP–marca y los parámetros PCO/PCV suministrados.</li>
+<li><strong>Numeración de figuras y tablas</strong>, mención en el texto y leyendas claras.</li>
+<li><strong>Transparencia sobre IA</strong>: identifica qué tareas se apoyaron en IA y qué errores o limitaciones detectaste al verificar sus respuestas.</li>
+<li><strong>Entregable</strong>: PDF/HTML, con tablas/figuras incrustadas, scripts reproducibles y lista de referencias.</li>
 </ul>
 </div>
 </div>
