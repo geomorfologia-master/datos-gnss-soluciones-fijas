@@ -1,0 +1,910 @@
+---
+title: "Procesamiento PPK reproducible de dos receptores GNSS"
+subtitle: "Base Unicore, rovers Unicore y u-blox; conversión RINEX, solución y evaluación de incertidumbre"
+author: "Protocolo de procesamiento GNSS"
+date: "`r format(Sys.Date(), '%d/%m/%Y')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    code_folding: show
+    df_print: paged
+editor_options:
+  chunk_output_type: console
+---
+
+# Alcance y condiciones
+
+Este cuaderno ejecuta un **PPK estático, combinado (forward + backward)** con **GPS + GLONASS**, una **base Unicore** de coordenadas previamente determinadas por PPP (NRCan) y **dos rovers** (Unicore y u-blox). No utiliza otra base. Cada bloque puede ejecutarse independientemente, en orden, en RStudio. Los resultados se guardan en disco y no se modifican los datos brutos.
+
+Se conserva el umbral de validación de ambigüedades **LAMBDA = 3.0**. El ajuste `l1+l2+l5` permite tres frecuencias cuando el receptor y las observaciones las aportan. El rover **u-blox F9P no mide L5**: en su caso la tercera frecuencia no añade datos. Los códigos de observación disponibles y el porcentaje FIX pueden diferir entre receptores. El procesamiento combinado usa observaciones futuras y **no representa el tiempo de convergencia en tiempo real**.
+
+**Condiciones de ejecución:** R, RStudio, `convbin` compatible con los formatos de los registros, `rnx2rtkp` de RTKLIB demo5 compatible con la configuración, y paquetes `ggplot2`, `dplyr` y `tidyr`. Se recomienda la misma versión de RTKLIB para repetir los resultados. Los porcentajes FIX son resultados del procesamiento, no garantías de exactitud.
+
+La estructura inicial esperada es:
+
+```text
+proyecto/
+├── ppp/                  # Ya contiene la solución PPP y archivos NRCan
+│   └── base_unida_30s.sum
+├── raw/
+│   ├── base/             # Archivos .bin de la base Unicore
+│   └── rover/            # Archivos originales de ambos rovers
+├── ppk/                  # Inicialmente vacía
+├── rinex/
+│   ├── base/             # Inicialmente vacía
+│   └── rover/            # Inicialmente vacía
+├── scripts/              # Inicialmente vacía
+└── tuberia_ppk_rovers.Rmd
+```
+
+> **Importante:** abrir el proyecto en RStudio con el directorio de trabajo situado en `proyecto/`. El archivo `.sum` de NRCan se conserva como evidencia del PPP. Las coordenadas XYZ utilizadas abajo deben verificarse contra ese informe y su época de referencia.
+
+# 1. Preparación del entorno
+
+```{r instalar-paquetes, eval=FALSE}
+paquetes <- c("ggplot2", "dplyr", "tidyr", "knitr", "rmarkdown")
+
+faltantes <- paquetes[
+  !vapply(paquetes, requireNamespace, logical(1), quietly = TRUE)
+]
+
+if (length(faltantes)) {
+  install.packages(faltantes)
+}
+```
+
+
+```{r inicio}
+options(stringsAsFactors = FALSE)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+raiz <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+stopifnot(dir.exists(file.path(raiz, "raw/base")),
+          dir.exists(file.path(raiz, "raw/rover")),
+          dir.exists(file.path(raiz, "ppp")))
+
+for (d in c("ppk", "ppk/unicore", "ppk/ublox", "ppk/figuras",
+            "rinex", "rinex/base", "rinex/rover", "scripts")) {
+  dir.create(file.path(raiz, d), recursive = TRUE, showWarnings = FALSE)
+}
+
+cat("Proyecto:", raiz, "\n")
+```
+
+# 2. Identificar entradas y ejecutables
+
+La base se registra en archivos horarios. Para estas dos sesiones se utiliza el archivo que cubre ambos intervalos: **30 de agosto de 2026, 16:00–17:00 GPST**. Las horas y el solapamiento se comprobarán tras la conversión.
+
+```{r rutas}
+# ------------------------------------------------------------
+# 1. Directorios y archivos brutos
+# ------------------------------------------------------------
+
+# Una única base Unicore y dos rovers: Unicore y u-blox
+
+dir_base  <- file.path(raiz, "raw", "base")
+dir_rover <- file.path(raiz, "raw", "rover")
+
+rover_unicore_raw <- file.path(
+  dir_rover,
+  "20260830-121910-unicore-nmea-data-YERAL.log"
+)
+
+rover_ublox_raw <- file.path(
+  dir_rover,
+  "20260830-122740-ubx-nmea-data-YERAL.ubx"
+)
+
+# Comprobar los archivos originales de los rovers
+rover_raw <- c(rover_unicore_raw, rover_ublox_raw)
+
+if (!all(file.exists(rover_raw))) {
+  stop(
+    "Faltan archivos originales de los rovers:\n",
+    paste(rover_raw[!file.exists(rover_raw)], collapse = "\n")
+  )
+}
+
+# ------------------------------------------------------------
+# 2. Seleccionar archivos horarios de la base Unicore
+# ------------------------------------------------------------
+
+# Los nombres de los archivos de los rovers contienen
+# la hora local de República Dominicana (UTC-4).
+#
+# Los archivos horarios de la base Unicore utilizan UTC.
+#
+# Se considera una duración máxima de 180 segundos
+# para cada sesión de rover.
+
+seleccionar_archivos_base <- function(
+    rover,
+    dir_base,
+    duracion_max = 180,
+    desfase_horas = 4
+) {
+
+  nombre <- basename(rover)
+  patron <- "^([0-9]{8})-([0-9]{6})"
+
+  if (!grepl(patron, nombre)) {
+    stop("Nombre de rover no reconocido: ", nombre)
+  }
+
+  # Extraer fecha y hora del nombre
+  fecha_hora <- sub(patron, "\\1\\2", nombre)
+
+  # Interpretar la hora local como una fecha numérica
+  # y aplicar explícitamente el desplazamiento UTC-4.
+  inicio_local <- as.POSIXct(
+    fecha_hora,
+    format = "%Y%m%d%H%M%S",
+    tz = "UTC"
+  )
+
+  if (is.na(inicio_local)) {
+    stop("Fecha u hora inválida: ", nombre)
+  }
+
+  # Convertir la hora del nombre a UTC
+  inicio_utc <- inicio_local + desfase_horas * 3600
+
+  # Extremo superior del intervalo de observación
+  fin_utc <- inicio_utc + duracion_max
+
+  # Obtener las horas UTC que intersectan el intervalo
+  hora_inicial <- floor(as.numeric(inicio_utc) / 3600) * 3600
+  hora_final   <- floor(as.numeric(fin_utc) / 3600) * 3600
+
+  horas <- as.POSIXct(
+    seq(hora_inicial, hora_final, by = 3600),
+    origin = "1970-01-01",
+    tz = "UTC"
+  )
+
+  # Nombres de los archivos horarios de la base Unicore
+  nombres_base <- paste0(
+    format(horas, "%Y%m%d_%H0000", tz = "UTC"),
+    "_00.bin"
+  )
+
+  archivos <- file.path(dir_base, nombres_base)
+
+  # Comprobar que existen todos los archivos necesarios
+  if (!all(file.exists(archivos))) {
+    stop(
+      "Faltan archivos horarios de la base Unicore:\n",
+      paste(
+        archivos[!file.exists(archivos)],
+        collapse = "\n"
+      )
+    )
+  }
+
+  archivos
+}
+
+# Archivos de la MISMA base Unicore necesarios
+# para cubrir la sesión de cada rover.
+
+archivos_base_para_rover_unicore <- seleccionar_archivos_base(
+  rover = rover_unicore_raw,
+  dir_base = dir_base
+)
+
+archivos_base_para_rover_ublox <- seleccionar_archivos_base(
+  rover = rover_ublox_raw,
+  dir_base = dir_base
+)
+
+# Reunir los archivos horarios necesarios para ambas sesiones.
+# Eliminar duplicados y ordenar cronológicamente.
+
+bases_necesarias <- sort(unique(c(
+  archivos_base_para_rover_unicore,
+  archivos_base_para_rover_ublox
+)))
+
+cat("\nArchivos horarios de la base Unicore seleccionados:\n")
+print(basename(bases_necesarias))
+
+cat("\nBase requerida para el rover Unicore:\n")
+print(basename(archivos_base_para_rover_unicore))
+
+cat("\nBase requerida para el rover u-blox:\n")
+print(basename(archivos_base_para_rover_ublox))
+
+# ------------------------------------------------------------
+# 3. Consolidar los archivos binarios de la base Unicore
+# ------------------------------------------------------------
+
+# Si ambas sesiones se encuentran dentro de la misma hora,
+# se copia un único archivo.
+#
+# Si alguna sesión cruza una hora UTC, o los rovers
+# corresponden a horas diferentes, se concatenan
+# cronológicamente los archivos necesarios.
+#
+# Los binarios originales nunca se modifican.
+
+unir_binarios <- function(
+    archivos,
+    destino,
+    bloque_bytes = 1024 * 1024
+) {
+
+  if (!length(archivos)) {
+    stop("No hay archivos de base para consolidar.")
+  }
+
+  archivos <- sort(unique(archivos))
+
+  dir.create(
+    dirname(destino),
+    recursive = TRUE,
+    showWarnings = FALSE
+  )
+
+  # Impedir que el destino sobrescriba un archivo original
+  destino_normalizado <- normalizePath(
+    destino,
+    winslash = "/",
+    mustWork = FALSE
+  )
+
+  originales <- normalizePath(
+    archivos,
+    winslash = "/",
+    mustWork = TRUE
+  )
+
+  if (destino_normalizado %in% originales) {
+    stop("El destino no puede coincidir con un archivo original.")
+  }
+
+  # Caso de un único archivo: copiar directamente
+  if (length(archivos) == 1L) {
+
+    cat("\nCopiando un único archivo de base:\n")
+    cat(basename(archivos), "\n")
+
+    if (!file.copy(
+      from = archivos,
+      to = destino,
+      overwrite = TRUE
+    )) {
+      stop("No se pudo copiar el archivo de base.")
+    }
+
+  } else {
+
+    # Caso de varios archivos: concatenación binaria
+    cat("\nConcatenando", length(archivos),
+        "archivos horarios de la base Unicore.\n")
+
+    salida <- file(destino, open = "wb")
+    on.exit(close(salida), add = TRUE)
+
+    for (archivo in archivos) {
+
+      cat("Incorporando:", basename(archivo), "\n")
+
+      entrada <- file(archivo, open = "rb")
+
+      tryCatch(
+        {
+          repeat {
+
+            datos <- readBin(
+              entrada,
+              what = "raw",
+              n = bloque_bytes
+            )
+
+            if (!length(datos)) break
+
+            writeBin(datos, salida)
+          }
+        },
+        finally = close(entrada)
+      )
+    }
+  }
+
+  invisible(destino)
+}
+
+# Archivo binario consolidado que utilizará convbin.
+# Se conserva el nombre base_bin para compatibilidad
+# con los siguientes bloques del cuaderno.
+
+base_bin <- file.path(
+  raiz,
+  "rinex",
+  "base",
+  "base_seleccionada.bin"
+)
+
+unir_binarios(
+  archivos = bases_necesarias,
+  destino = base_bin
+)
+
+# ------------------------------------------------------------
+# 4. Verificar integridad del archivo consolidado
+# ------------------------------------------------------------
+
+bytes_esperados <- sum(
+  file.info(bases_necesarias)$size
+)
+
+bytes_obtenidos <- file.info(base_bin)$size
+
+if (is.na(bytes_obtenidos) ||
+    bytes_obtenidos != bytes_esperados) {
+  stop(
+    "El tamaño del archivo consolidado no coincide ",
+    "con la suma de los archivos originales."
+  )
+}
+
+cat(
+  "\nArchivo consolidado de la base Unicore:\n",
+  base_bin,
+  "\nTamaño:", bytes_obtenidos, "bytes\n"
+)
+
+# ------------------------------------------------------------
+# 5. Comprobar todas las entradas del procesamiento
+# ------------------------------------------------------------
+
+# Una base Unicore consolidada y dos rovers
+
+entradas <- c(
+  base_bin,
+  rover_unicore_raw,
+  rover_ublox_raw
+)
+
+if (!all(file.exists(entradas))) {
+  stop(
+    "Faltan archivos de entrada:\n",
+    paste(
+      entradas[!file.exists(entradas)],
+      collapse = "\n"
+    )
+  )
+}
+
+# ------------------------------------------------------------
+# 6. Localizar los ejecutables GNSS
+# ------------------------------------------------------------
+
+# Preferir la versión de convbin instalada en /usr/local/bin,
+# si está disponible, para evitar utilizar accidentalmente
+# otra compilación de RTKLIB.
+
+convbin_preferido <- "/usr/local/bin/convbin"
+
+if (file.exists(convbin_preferido) &&
+    file.access(convbin_preferido, mode = 1) == 0) {
+
+  convbin <- convbin_preferido
+
+} else {
+
+  convbin <- unname(Sys.which("convbin"))
+}
+
+rnx2rtkp <- unname(Sys.which("rnx2rtkp"))
+
+if (!nzchar(convbin) || !nzchar(rnx2rtkp)) {
+  stop(
+    "No se encuentran convbin y/o rnx2rtkp ",
+    "entre los ejecutables disponibles."
+  )
+}
+
+cat(
+  "\nHerramientas GNSS disponibles:\n",
+  "convbin:   ", convbin, "\n",
+  "rnx2rtkp: ", rnx2rtkp, "\n",
+  sep = ""
+)
+
+# ------------------------------------------------------------
+# 7. Inventario final de entradas
+# ------------------------------------------------------------
+
+inventario <- data.frame(
+  tipo = c(
+    "Base Unicore consolidada",
+    "Rover Unicore",
+    "Rover u-blox"
+  ),
+  archivo = basename(entradas),
+  bytes = file.info(entradas)$size,
+  ruta = entradas
+)
+
+knitr::kable(
+  inventario,
+  caption = "Archivos de entrada del procesamiento PPK"
+)
+```
+
+La función siguiente ejecuta comandos externos y guarda tanto la salida como los mensajes de error. Un archivo de registro permite revisar cada paso.
+
+```{r ejecutor}
+ejecutar <- function(programa, argumentos, registro) {
+  dir.create(dirname(registro), recursive = TRUE, showWarnings = FALSE)
+  cat("Ejecutando:", basename(programa), "\n")
+  estado <- suppressWarnings(system2(programa, args = shQuote(argumentos),
+                                     stdout = registro, stderr = registro))
+  if (!identical(as.integer(estado), 0L)) {
+    ultimas <- if (file.exists(registro)) tail(readLines(registro, warn = FALSE), 20) else ""
+    stop("Comando falló (código ", estado, "):\n", paste(ultimas, collapse = "\n"))
+  }
+  invisible(registro)
+}
+```
+
+# 3. Coordenadas de la base procedentes de PPP
+
+Se emplean las coordenadas cartesianas geocéntricas **ECEF (m)** determinadas previamente mediante NRCan. Verificar el informe `ppp/base_unida_30s.sum` antes de ejecutar la solución. Estas coordenadas pertenecen a **esta base**, no a los rovers.
+
+```{r coordenadas-base}
+base_xyz <- c(
+  X = 2078167.0250,
+  Y = -5683987.2712,
+  Z = 2006702.5967
+)
+print(base_xyz)
+cat("Informe PPP disponible:", file.exists(file.path(raiz, "ppp/base_unida_30s.sum")), "\n")
+```
+
+**Control geodésico:** registrar el marco de referencia, época, tipo de antena y altura de referencia utilizados por NRCan. Las coordenadas ECEF deben corresponder al punto físico de referencia de la antena/base; una confusión entre ARP y centro de fase produce un sesgo vertical.
+
+# 4. Conversión de datos brutos a RINEX
+
+Se ejecutan las conversiones apropiadas para cada registro, conservando los archivos originales. Las observaciones y la navegación de un mismo registro pueden recuperarse en pasos separados.
+
+## 4.1 Base Unicore
+
+```{r convertir-base}
+base_obs <- file.path(raiz, "rinex/base/base_unicore.obs")
+base_nav <- file.path(raiz, "rinex/base/base_unicore.nav")
+ejecutar(convbin,
+        c("-r", "unicore", "-v", "3.04", "-o", base_obs, "-n", base_nav, base_bin),
+        file.path(raiz, "rinex/base/conversion.log"))
+stopifnot(file.exists(base_obs), file.exists(base_nav))
+```
+
+## 4.2 Rover Unicore: observaciones y navegación
+
+```{r convertir-rover-unicore}
+uni_obs <- file.path(raiz, "rinex/rover/rover_unicore.obs")
+uni_nav <- file.path(raiz, "rinex/rover/rover_unicore.nav")
+
+ejecutar(convbin,
+        c("-r", "nov", "-v", "3.04", "-o", uni_obs,
+          "-n", file.path(raiz, "rinex/rover/nav_temporal_unicore.nav"),
+          rover_unicore_raw),
+        file.path(raiz, "rinex/rover/conversion_obs_unicore.log"))
+
+ejecutar(convbin,
+        c("-r", "unicore", "-v", "3.04",
+          "-o", file.path(raiz, "rinex/rover/obs_temporal_unicore.obs"),
+          "-n", uni_nav, rover_unicore_raw),
+        file.path(raiz, "rinex/rover/conversion_nav_unicore.log"))
+stopifnot(file.exists(uni_obs), file.exists(uni_nav))
+```
+
+Los nombres de formato en los comandos anteriores son **parámetros técnicos del conversor** y no cambian la marca ni el tipo del receptor utilizado. Los archivos temporales solo se generan si el conversor encuentra datos de ese tipo.
+
+## 4.3 Rover u-blox
+
+```{r convertir-rover-ublox}
+ubx_obs <- file.path(raiz, "rinex/rover/rover_ublox.obs")
+ubx_nav <- file.path(raiz, "rinex/rover/rover_ublox.nav")
+ejecutar(convbin,
+        c("-r", "ubx", "-v", "3.04", "-o", ubx_obs, "-n", ubx_nav,
+          rover_ublox_raw),
+        file.path(raiz, "rinex/rover/conversion_ublox.log"))
+stopifnot(file.exists(ubx_obs), file.exists(ubx_nav))
+```
+
+## 4.4 Control de épocas y señales
+
+```{r auditar-rinex}
+resumen_rinex <- function(archivo) {
+  con <- file(archivo, open = "rt")
+  on.exit(close(con))
+  cab <- character()
+  repeat {
+    linea <- readLines(con, n = 1L, warn = FALSE)
+    if (!length(linea)) stop("Cabecera incompleta: ", archivo)
+    cab <- c(cab, linea)
+    if (grepl("END OF HEADER", linea, fixed = TRUE)) break
+  }
+  # Conteo en flujo, sin cargar el RINEX grande completo en memoria
+  epocas <- 0L
+  repeat {
+    bloque <- readLines(con, n = 10000L, warn = FALSE)
+    if (!length(bloque)) break
+    epocas <- epocas + sum(startsWith(bloque, ">"))
+  }
+  list(epocas = epocas,
+       tiempos = grep("TIME OF (FIRST|LAST) OBS", cab, value = TRUE),
+       tipos = grep("SYS / # / OBS TYPES", cab, value = TRUE))
+}
+
+for (archivo in c(base_obs, uni_obs, ubx_obs)) {
+  a <- resumen_rinex(archivo)
+  cat("\n", basename(archivo), "— épocas:", a$epocas, "\n")
+  cat(paste(a$tiempos, collapse = "\n"), "\n")
+  cat(paste(a$tipos, collapse = "\n"), "\n")
+}
+```
+
+Para estos registros se esperan aproximadamente **3600 épocas de base**, **635 épocas del rover Unicore** y **632 épocas del rover u-blox**. Ambos rovers se registraron en momentos distintos, aunque dentro del intervalo de la base. Si las fechas no se solapan, no ejecutar el PPK.
+
+# 5. Crear las configuraciones RTKLIB en `scripts/`
+
+Se generan **dos archivos `.conf` desde R**, uno para cada rover, sin depender de configuraciones previas. Ambos utilizan los mismos parámetros de posicionamiento: estático, combinado, GPS + GLONASS, frecuencia configurada como `l1+l2+l5`, umbral LAMBDA 3.0 y coordenadas PPP de la base. GLONASS se incorpora a la estimación, pero la fijación específica de sus ambigüedades se mantiene desactivada (`pos2-gloarmode=off`), reproduciendo el ajuste de referencia. El receptor u-blox puede aprovechar solamente las frecuencias que realmente registró.
+
+```{r generar-conf}
+crear_conf <- function(
+    destino, xyz,
+    navsys = 5L,
+    frecuencias = "l1+l2+l5",
+    ratio = 3,
+    elevacion_ar = 15,
+    arlockcnt = 0,
+    minfixsats = 4
+) {
+
+  opciones <- c(
+    # Posicionamiento
+    "pos1-posmode       =static",
+    paste0("pos1-frequency     =", frecuencias),
+    "pos1-soltype       =combined",
+    "pos1-elmask        =15",
+    "pos1-snrmask_r     =off",
+    "pos1-snrmask_b     =off",
+    "pos1-dynamics      =off",
+    "pos1-tidecorr      =off",
+    "pos1-ionoopt       =brdc",
+    "pos1-tropopt       =saas",
+    "pos1-sateph        =brdc",
+    "pos1-exclsats      =",
+    paste0("pos1-navsys        =", navsys),
+
+    # Resolución de ambigüedades
+    "pos2-armode        =continuous",
+    "pos2-gloarmode     =off",
+    "pos2-bdsarmode     =off",
+    "pos2-arfilter      =on",
+
+    sprintf("pos2-arthres       =%s", ratio),
+    sprintf("pos2-arthresmin    =%s", ratio),
+    sprintf("pos2-arthresmax    =%s", ratio),
+    "pos2-arthres1      =0.04",
+
+    sprintf("pos2-arlockcnt     =%d", arlockcnt),
+    sprintf("pos2-minfixsats    =%d", minfixsats),
+    "pos2-mindropsats   =10",
+    sprintf("pos2-arelmask      =%s", elevacion_ar),
+    "pos2-arminfix      =10",
+    "pos2-armaxiter     =1",
+
+    # Rechazo de observaciones
+    "pos2-rejphase      =2",
+    "pos2-rejcode       =10",
+
+    # Modelo estocástico
+    "stats-eratio1      =300",
+    "stats-eratio2      =300",
+    "stats-eratio5      =300",
+    "stats-errphase     =0.005",
+    "stats-errphaseel   =0.005",
+    "stats-errsnr       =0",
+
+    # Salida
+    "out-solformat      =llh",
+    "out-outhead        =on",
+    "out-outopt         =on",
+    "out-timesys        =gpst",
+    "out-timeform       =hms",
+    "out-degform        =deg",
+    "out-fieldsep       =",
+    "out-height         =ellipsoidal",
+    "out-solstatic      =all",
+    "out-outstat        =residual",
+
+    # Coordenadas de base
+    "ant1-postype       =single",
+    "ant2-postype       =xyz",
+    sprintf("ant2-pos1          =%.4f", xyz[["X"]]),
+    sprintf("ant2-pos2          =%.4f", xyz[["Y"]]),
+    sprintf("ant2-pos3          =%.4f", xyz[["Z"]])
+  )
+
+  writeLines(opciones, destino)
+  destino
+}
+
+
+conf_uni <- crear_conf(file.path(raiz, "scripts/ppk_unicore.conf"), base_xyz)
+conf_ubx <- crear_conf(file.path(raiz, "scripts/ppk_ublox.conf"), base_xyz)
+cat("Configuraciones creadas:\n", conf_uni, "\n", conf_ubx, "\n")
+cat(paste(grep("pos1-(frequency|soltype|navsys)|pos2-(gloarmode|arthres)",
+               readLines(conf_uni), value = TRUE), collapse = "\n"))
+```
+
+> **Compatibilidad:** RTKLIB demo5 debe reconocer `l1+l2+l5` y compilarse con capacidad para tres frecuencias. Revisar la cabecera del `.pos` después de ejecutar. Si el binario solo admite dos frecuencias, el resultado no debe etiquetarse como triple frecuencia. No se modifica el umbral LAMBDA para forzar FIX.
+
+# 6. Calcular las soluciones PPK
+
+Se utiliza la misma base y los archivos de navegación disponibles para cada rover. Los resultados se guardan en directorios independientes.
+
+## 6.1 Rover Unicore
+
+```{r ppk-unicore}
+pos_uni <- file.path(raiz, "ppk/unicore/solucion.pos")
+ejecutar(rnx2rtkp,
+        c("-k", conf_uni, "-o", pos_uni,
+          uni_obs, base_obs, uni_nav, base_nav),
+        file.path(raiz, "ppk/unicore/procesamiento.log"))
+stopifnot(file.exists(pos_uni))
+cat(paste(head(readLines(pos_uni, n = 40), 30), collapse = "\n"))
+```
+
+## 6.2 Rover u-blox
+
+```{r ppk-ublox}
+pos_ubx <- file.path(raiz, "ppk/ublox/solucion.pos")
+ejecutar(rnx2rtkp,
+        c("-k", conf_ubx, "-o", pos_ubx,
+          ubx_obs, base_obs, ubx_nav, base_nav),
+        file.path(raiz, "ppk/ublox/procesamiento.log"))
+stopifnot(file.exists(pos_ubx))
+cat(paste(head(readLines(pos_ubx, n = 40), 30), collapse = "\n"))
+```
+
+Los dos rovers se observaron en intervalos **no simultáneos**; sus diferencias no pueden atribuirse únicamente a la marca del receptor. La cobertura parcial del dosel, la geometría y la calidad de señal pueden afectar de manera distinta a cada sesión.
+
+# 7. Leer y evaluar las soluciones
+
+En la salida estándar LLH de RTKLIB, las columnas son fecha, hora GPST, latitud, longitud, altura elipsoidal, calidad `Q`, número de satélites `ns`, desviaciones estándar norte/este/vertical, covarianzas, edad y ratio. Las incertidumbres estimadas por RTKLIB son **formales**, no errores medidos frente a una verdad terreno.
+
+```{r leer-soluciones}
+leer_pos <- function(archivo, nombre) {
+  lineas <- readLines(archivo, warn = FALSE)
+  lineas <- lineas[nzchar(trimws(lineas)) & !startsWith(trimws(lineas), "%")]
+  if (!length(lineas)) stop("Sin soluciones: ", archivo)
+  x <- read.table(text = paste(lineas, collapse = "\n"), header = FALSE,
+                  fill = TRUE, stringsAsFactors = FALSE)
+  if (ncol(x) < 15L) stop("Formato inesperado en ", archivo, ": ", ncol(x), " columnas")
+  x <- x[, 1:15]
+  names(x) <- c("fecha", "hora", "lat", "lon", "h", "Q", "ns",
+                "sdn", "sde", "sdu", "sdne", "sdeu", "sdun", "age", "ratio")
+  numericas <- setdiff(names(x), c("fecha", "hora"))
+  x[numericas] <- lapply(x[numericas], as.numeric)
+  x$instante <- as.POSIXct(paste(x$fecha, x$hora),
+                          format = "%Y/%m/%d %H:%M:%OS", tz = "UTC")
+  x$segundo <- as.numeric(difftime(x$instante, min(x$instante), units = "secs"))
+  x$receptor <- nombre
+  x$calidad <- factor(ifelse(x$Q == 1, "FIX", ifelse(x$Q == 2, "FLOAT", "Otra")),
+                      levels = c("FIX", "FLOAT", "Otra"))
+  x
+}
+
+soluciones <- bind_rows(
+  leer_pos(pos_uni, "Unicore"),
+  leer_pos(pos_ubx, "u-blox")
+)
+
+resumen <- soluciones |>
+  group_by(receptor) |>
+  summarise(
+    epocas = n(),
+    fix = sum(Q == 1, na.rm = TRUE),
+    float = sum(Q == 2, na.rm = TRUE),
+    porcentaje_fix = 100 * mean(Q == 1, na.rm = TRUE),
+    ratio_mediano = median(ratio[is.finite(ratio)], na.rm = TRUE),
+    .groups = "drop"
+  )
+knitr::kable(resumen, digits = 2, caption = "Resumen de calidad de las soluciones PPK")
+```
+
+```{r barras-fix, fig.width=8, fig.height=4.5}
+calidades <- soluciones |>
+  count(receptor, calidad) |>
+  group_by(receptor) |>
+  mutate(porcentaje = 100 * n / sum(n)) |>
+  ungroup()
+
+ggplot(calidades, aes(receptor, porcentaje, fill = calidad)) +
+  geom_col(width = 0.55) +
+  geom_text(aes(label = sprintf("%.1f %%", porcentaje)),
+            position = position_stack(vjust = 0.5), size = 3.5) +
+  scale_y_continuous(limits = c(0, 100), expand = expansion(mult = c(0, 0))) +
+  labs(x = NULL, y = "Porcentaje de épocas", fill = "Calidad",
+       title = "Clasificación de las soluciones PPK") +
+  theme_minimal(base_size = 12)
+```
+
+# 8. Coordenadas locales y barras de error
+
+Para comparar las posiciones en metros, se transforman las coordenadas geodésicas WGS84/GRS80 de las soluciones a un sistema local **este–norte–arriba (ENU)**, centrado en la **mediana de las posiciones FIX de cada rover**. Esto permite analizar dispersión sin confundirla con la distancia entre puntos levantados. Las barras de error se calculan a partir de las desviaciones estándar formales de RTKLIB; se muestran como **±1 desviación estándar**, no como intervalos de confianza del 95 %.
+
+```{r transformacion-enu}
+a_wgs <- 6378137.0
+f_wgs <- 1 / 298.257223563
+e2_wgs <- f_wgs * (2 - f_wgs)
+
+a_ecef <- function(lat, lon, h) {
+  phi <- lat * pi / 180
+  lam <- lon * pi / 180
+  N <- a_wgs / sqrt(1 - e2_wgs * sin(phi)^2)
+  cbind(
+    X = (N + h) * cos(phi) * cos(lam),
+    Y = (N + h) * cos(phi) * sin(lam),
+    Z = (N * (1 - e2_wgs) + h) * sin(phi)
+  )
+}
+
+calcular_enu <- function(datos) {
+  fijos <- datos[datos$Q == 1 & complete.cases(datos[, c("lat", "lon", "h")]), ]
+  if (nrow(fijos) < 2) {
+    datos$E <- datos$N <- datos$U <- NA_real_
+    return(datos)
+  }
+  lat0 <- median(fijos$lat)
+  lon0 <- median(fijos$lon)
+  h0 <- median(fijos$h)
+  p0 <- as.numeric(a_ecef(lat0, lon0, h0))
+  xyz <- a_ecef(datos$lat, datos$lon, datos$h)
+  delta <- sweep(xyz, 2, p0, "-")
+  phi <- lat0 * pi / 180
+  lam <- lon0 * pi / 180
+  datos$E <- -sin(lam) * delta[, 1] + cos(lam) * delta[, 2]
+  datos$N <- -sin(phi)*cos(lam)*delta[, 1] - sin(phi)*sin(lam)*delta[, 2] + cos(phi)*delta[, 3]
+  datos$U <- cos(phi)*cos(lam)*delta[, 1] + cos(phi)*sin(lam)*delta[, 2] + sin(phi)*delta[, 3]
+  datos
+}
+
+soluciones_enu <- bind_rows(lapply(split(soluciones, soluciones$receptor), calcular_enu))
+```
+
+## 8.1 Dispersión horizontal de épocas FIX, con barras de error
+
+Se dibuja una barra horizontal `±sde` y una vertical `±sdn` por época FIX. Las barras describen la incertidumbre **formal por época**, no el error respecto a una coordenada de control. Si hay cientos de puntos, la superposición es esperable; el gráfico es interactuable mediante zoom en el HTML del navegador, o se puede exportar en mayor resolución.
+
+```{r grafico-horizontal, fig.width=9, fig.height=6}
+fix_enu <- soluciones_enu |> filter(Q == 1, is.finite(E), is.finite(N))
+
+if (nrow(fix_enu) > 0) {
+  g_horizontal <- ggplot(fix_enu, aes(E * 1000, N * 1000)) +
+    geom_segment(aes(x = (E-sde)*1000, xend = (E+sde)*1000,
+                     y = N*1000, yend = N*1000), alpha = 0.22) +
+    geom_segment(aes(x = E*1000, xend = E*1000,
+                     y = (N-sdn)*1000, yend = (N+sdn)*1000), alpha = 0.22) +
+    geom_point(size = 0.9, alpha = 0.7) +
+    facet_wrap(~receptor) +
+    coord_equal() +
+    labs(x = "Este relativo (mm)", y = "Norte relativo (mm)",
+         title = "Dispersión horizontal de épocas FIX",
+         subtitle = "Barras de error: ±1 DE formal por componente") +
+    theme_minimal(base_size = 12)
+  print(g_horizontal)
+  ggsave(file.path(raiz, "ppk/figuras/dispersión_horizontal.png"),
+         g_horizontal, width = 10, height = 6, dpi = 200)
+} else {
+  cat("No hay épocas FIX para representar.\n")
+}
+```
+
+## 8.2 Componente vertical y barras de error
+
+```{r grafico-vertical, fig.width=9, fig.height=5}
+if (nrow(fix_enu) > 0) {
+  g_vertical <- ggplot(fix_enu, aes(segundo, U * 1000)) +
+    geom_errorbar(aes(ymin = (U-sdu)*1000, ymax = (U+sdu)*1000),
+                  width = 0, alpha = 0.2) +
+    geom_point(size = 0.8, alpha = 0.65) +
+    facet_wrap(~receptor, scales = "free_x") +
+    labs(x = "Segundos desde el inicio de cada sesión", y = "Arriba relativo (mm)",
+         title = "Variación vertical de las soluciones FIX",
+         subtitle = "Barras de error: ±1 DE formal vertical") +
+    theme_minimal(base_size = 12)
+  print(g_vertical)
+  ggsave(file.path(raiz, "ppk/figuras/variación_vertical.png"),
+         g_vertical, width = 10, height = 5, dpi = 200)
+}
+```
+
+## 8.3 Dispersión observada y precisión formal
+
+La **dispersión observada** se calcula como desviación estándar de las posiciones FIX en ENU. Se presenta separadamente de la **incertidumbre formal mediana** (`sdn`, `sde`, `sdu`) estimada por RTKLIB. No son magnitudes equivalentes y ninguna, por sí sola, estima el sesgo absoluto.
+
+```{r tabla-incertidumbre}
+comparacion <- fix_enu |>
+  group_by(receptor) |>
+  summarise(
+    n_fix = n(),
+    sd_E_mm = sd(E, na.rm = TRUE) * 1000,
+    sd_N_mm = sd(N, na.rm = TRUE) * 1000,
+    sd_U_mm = sd(U, na.rm = TRUE) * 1000,
+    formal_E_mm = median(sde, na.rm = TRUE) * 1000,
+    formal_N_mm = median(sdn, na.rm = TRUE) * 1000,
+    formal_U_mm = median(sdu, na.rm = TRUE) * 1000,
+    .groups = "drop"
+  )
+knitr::kable(comparacion, digits = 3,
+             caption = "Dispersión temporal de FIX e incertidumbre formal mediana (mm)")
+```
+
+# 9. Evolución de la calidad y el ratio LAMBDA
+
+```{r evolucion-calidad, fig.width=9, fig.height=4.5}
+ggplot(soluciones, aes(segundo, Q, color = calidad)) +
+  geom_point(alpha = 0.7, size = 0.8) +
+  facet_wrap(~receptor, scales = "free_x") +
+  scale_y_continuous(breaks = c(1, 2, 5)) +
+  labs(x = "Segundos desde el inicio de cada sesión", y = "Código de calidad RTKLIB",
+       title = "Evolución temporal de FIX/FLOAT") +
+  theme_minimal(base_size = 12)
+```
+
+```{r ratio-lambda, fig.width=9, fig.height=4.5}
+ggplot(soluciones, aes(segundo, ratio, color = calidad)) +
+  geom_point(alpha = 0.65, size = 0.8) +
+  geom_hline(yintercept = 3, linetype = "dashed") +
+  facet_wrap(~receptor, scales = "free_x") +
+  labs(x = "Segundos desde el inicio de cada sesión", y = "Ratio reportado",
+       title = "Ratio de validación de ambigüedades",
+       subtitle = "Línea discontinua: umbral configurado = 3") +
+  theme_minimal(base_size = 12)
+```
+
+# 10. Guardar resultados y reproducibilidad
+
+```{r exportar}
+write.csv(resumen, file.path(raiz, "ppk/resumen_calidad.csv"), row.names = FALSE)
+write.csv(comparacion, file.path(raiz, "ppk/resumen_dispersion.csv"), row.names = FALSE)
+write.csv(soluciones_enu, file.path(raiz, "ppk/soluciones_enu.csv"), row.names = FALSE)
+
+archivos_control <- c(entradas, conf_uni, conf_ubx)
+hashes <- tools::md5sum(archivos_control)
+write.csv(data.frame(archivo = names(hashes), md5 = unname(hashes)),
+          file.path(raiz, "ppk/huellas_archivos.csv"), row.names = FALSE)
+writeLines(capture.output(sessionInfo()), file.path(raiz, "ppk/sesion_R.txt"))
+cat("Resultados guardados en ppk/.\n")
+```
+
+# 11. Interpretación y límites
+
+1. **FIX** significa que RTKLIB aceptó una solución de ambigüedades enteras según los criterios configurados. Un porcentaje elevado de FIX no valida por sí solo la exactitud absoluta.
+2. **Combined** aprovecha toda la sesión en ambos sentidos temporales. Es adecuado para posprocesamiento, pero no representa una solución causal disponible en tiempo real.
+3. **Triple frecuencia:** el rover Unicore dispone de señales GPS L5 cuando las observa; el rover u-blox F9P no. El encabezado RINEX determina las señales realmente disponibles.
+4. **GLONASS:** la configuración incorpora GLONASS (`pos1-navsys=5`) y mantiene desactivada su fijación específica de ambigüedades (`pos2-gloarmode=off`). Esto evita atribuir erróneamente una mejora de FIX a la fijación de ambigüedades GLONASS.
+5. **Dosel y sesiones no simultáneas:** las diferencias entre rovers pueden depender del entorno, de la geometría y de las señales observadas, no solo de la marca.
+6. **Barras de error:** representan incertidumbres formales por época, no intervalos de confianza calibrados ni errores frente a una referencia independiente. La dispersión entre soluciones combinadas está correlacionada y puede ser muy pequeña.
+7. **Comparación de coordenadas:** los gráficos ENU están centrados separadamente para cada rover. Si se quiere estimar la diferencia física entre puntos, se debe usar una referencia ENU común y conocer si ambos ocuparon exactamente el mismo punto y la misma altura de antena.
+8. **Control externo:** cuando sea posible, contrastar el resultado con un punto de coordenadas conocidas o una sesión independiente.
+
+# 12. Compilar a HTML
+
+En RStudio, utilizar **Knit → Knit to HTML**. También se puede ejecutar desde la consola de R, estando en la raíz del proyecto:
+
+```{r compilar, eval=FALSE}
+rmarkdown::render("tuberia_ppk_rovers.Rmd", output_format = "html_document")
+```
+
+**Nota:** al compilar, los bloques se ejecutan desde el comienzo y pueden volver a generar archivos. Para trabajar paso a paso, ejecutar cada bloque en orden y compilar al final. Para evitar reprocesar datos al compilar, se pueden cambiar temporalmente a `eval=FALSE` los bloques de conversión y PPK una vez creados sus productos.

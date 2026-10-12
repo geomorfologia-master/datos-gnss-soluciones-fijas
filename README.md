@@ -3,7 +3,7 @@ fijas<small><br>Geomorfología (GEO-114)<br>Universidad Autónoma de Santo
 Domingo (UASD)</small>
 ================
 El Tali
-2026-08-31
+2026-10-12
 
 Versión HTML (quizá más legible),
 [aquí](https://geomorfologia-master.github.io/datos-gnss-soluciones-fijas/README.html)
@@ -12,6 +12,13 @@ Versión HTML (quizá más legible),
 José Gabriel Almánzar/Christian Gómez**. El trabajo de campo en el
 campus no es que sea “campo a través”, pero parece que pone a la gente
 contenta.
+
+# Guía para solución
+
+Consulta una guía para solución de la práctica
+[aquí](https://geomorfologia-master.github.io/datos-gnss-soluciones-fijas/ppk-guia-para-solucion.html).
+La guía incluye instrucciones paso a paso para procesar los datos y
+generar las soluciones fijas.
 
 # Fecha/hora de entrega
 

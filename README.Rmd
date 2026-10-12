@@ -70,6 +70,10 @@ if (grepl('gfm', output_format)) {
 ![](img/paresen_felise.jpg){width="50%"}<br>
 **Foto: José Gabriel Almánzar/Christian Gómez**. El trabajo de campo en el campus no es que sea "campo a través", pero parece que pone a la gente contenta.
 
+# Guía para solución
+
+Consulta una guía para solución de la práctica [aquí](https://geomorfologia-master.github.io/datos-gnss-soluciones-fijas/ppk-guia-para-solucion.html). La guía incluye instrucciones paso a paso para procesar los datos y generar las soluciones fijas.
+
 # Fecha/hora de entrega
 
 **Ver portal de la asignatura**
